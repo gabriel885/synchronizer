@@ -9,4 +9,4 @@ WORKDIR /java/synchronizer/classes/synchronizer
 RUN mkdir -p /opt/dir
 RUN echo "monitorable file" > /opt/dir/example.txt
 
-CMD ["java", "-cp", "main.java.synchronizer.Main", "-p", "/opt/dir"]
+CMD ["java", "-cp", "main.java.synchronizer.synchronizer.Main", "-p", "/opt/dir"]
