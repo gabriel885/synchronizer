@@ -1,8 +1,6 @@
 package synchronizer.app;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.file.FileSystem;
 import org.apache.commons.io.monitor.FileAlterationListener;
@@ -24,7 +22,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 // StorageApplication responsible for deploying all
@@ -77,10 +74,34 @@ public class StorageApplication extends MultiThreadedApplication {
                 EventBus eb = vertx.eventBus();
 
                 vertx.deployVerticle(new ActionListenerVerticle(new EventBusAddress("filesystem.actions")));
-                Thread.sleep(30000);
+                Thread.sleep(5000);
                 vertx.deployVerticle(new WatcherVerticle(path, new EventBusAddress("filesystem.actions")));
 
+                vertx.setPeriodic(1000, v -> eb.publish("news-feed", "Some news!"));
+                vertx.deployVerticle(new Verticle() {
+                    @Override
+                    public Vertx getVertx() {
+                        return null;
+                    }
 
+                    @Override
+                    public void init(Vertx vertx, Context context) {
+
+                    }
+
+                    @Override
+                    public void start(Future<Void> startFuture) throws Exception {
+                        EventBus eb = vertx.eventBus();
+                        eb.consumer("news-feed", message ->{
+                            System.out.println("Consumed dummy: " + message.body());
+                        });
+                    }
+
+                    @Override
+                    public void stop(Future<Void> stopFuture) throws Exception {
+
+                    }
+                });
             }
         }
         else{
