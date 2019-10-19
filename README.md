@@ -70,6 +70,11 @@ Local discovery protocol
 
 
 ### API
+
+### NOTES!
+
+RenameAction is not a model. Refactor models package or move all non-models to another package.
+
 // RUN ALL STORAGE SERVICES!!!!!
                 // System.out.println("renaming file foo.txt");
                 // addSequentService(new RenameFileService("foo.txt","bar.txt"));
