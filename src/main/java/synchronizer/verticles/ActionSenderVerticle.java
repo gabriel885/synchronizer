@@ -13,13 +13,11 @@ import synchronizer.models.*;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Set;
-import java.util.ArrayList;
 
-// WatcherVerticle watch for local file system alternations.
+// ActionSenderVerticle watch for local file system alternations.
 // It publishes the actions to the event bus
 // Uses Observable pattern
-public class WatcherVerticle extends AbstractVerticle {
+public class ActionSenderVerticle extends AbstractVerticle {
 
     // produce file system actions to event bus
     private MessageProducer<JsonObject> producer;
@@ -31,14 +29,19 @@ public class WatcherVerticle extends AbstractVerticle {
     private FileAlterationObserver observer;
     // notify observables
     private FileAlterationMonitor monitor;
-
     // observable
     private FileAlterationListener listener;
 
     private final int  MONITOR_INTERVAL = 400; // milliseconds
 
 
-    public WatcherVerticle(Path path, EventBusAddress address){
+    /**
+     *
+     * @param path
+     * @param address
+     * @param mapAddress
+     */
+    public ActionSenderVerticle(Path path, EventBusAddress address, SharedDataMapAddress mapAddress){
         this.actionObject = new JsonObject();
 
         EventBus eb = Vertx.vertx().eventBus();
@@ -49,7 +52,6 @@ public class WatcherVerticle extends AbstractVerticle {
         this.monitor = new FileAlterationMonitor(MONITOR_INTERVAL);
 
         this.actionObject = new JsonObject();
-
 
         this.listener = new FileAlterationListener(){
 
@@ -65,59 +67,67 @@ public class WatcherVerticle extends AbstractVerticle {
                public void onFileCreate(File file) {
                    // code for processing creation event
                    System.out.println(String.format("File %s created", file.toString()));
-                   //WatcherVerticle.this.producer.write(new CreateAction(null, file));
+                   //ActionSenderVerticle.this.producer.write(new CreateAction(null, file));
                    actionObject.put("CREATE",file.getPath());
-                   WatcherVerticle.this.producer.write(actionObject);
+                   ActionSenderVerticle.this.producer.write(actionObject);
                    actionObject.clear();
-                   // vertx.eventBus().publish("filesystem.actions", new Action)
+
                }
 
                @Override
                public void onFileChange(File file) {
                    // code for processing change event
                    System.out.println(String.format("File %s changed", file.toString()));
-                   //WatcherVerticle.this.producer.write(new ModifyAction(null, file));
+
+                   // ActionSenderVerticle.this.producer.write(new ModifyAction(null, file));
                    actionObject.put("MODIFY",file.getPath());
-                   WatcherVerticle.this.producer.write(actionObject);
+                   ActionSenderVerticle.this.producer.write(actionObject);
                    actionObject.clear();
+
+                   // update last modification time of a file
+                   synchronizer.models.File f = (synchronizer.models.File)vertx.sharedData().getLocalMap(mapAddress.toString()).get(file.toString());
+                   f.updateLastModification();
                }
 
                @Override
                public void onFileDelete(File file) {
+
                    // code for processing deletion event
                    System.out.println(String.format("File %s deleted", file.toString()));
-                   //WatcherVerticle.this.producer.write(new DeleteAction(null, file));
+                   //ActionSenderVerticle.this.producer.write(new DeleteAction(null, file));
                    actionObject.put("DELETE",file.getPath());
-                   WatcherVerticle.this.producer.write(actionObject);
+                   ActionSenderVerticle.this.producer.write(actionObject);
                    actionObject.clear();
+
+                   // update SharedDataApi
+                   vertx.sharedData().getLocalMap(mapAddress.toString()).remove(file.toString());
                }
 
 
                @Override
                public void onDirectoryCreate(File dir) {
                    System.out.println(String.format("Directory %s created", dir.toString()));
-                   //WatcherVerticle.this.producer.write(new CreateAction(null, dir));
+                   //ActionSenderVerticle.this.producer.write(new CreateAction(null, dir));
                    actionObject.put("CREATE",dir.getPath());
-                   WatcherVerticle.this.producer.write(actionObject);
+                   ActionSenderVerticle.this.producer.write(actionObject);
                    actionObject.clear();
                }
 
                @Override
                public void onDirectoryChange(File dir) {
                    System.out.println(String.format("Directory %s changed", dir.toString()));
-                   //WatcherVerticle.this.producer.write(new ModifyAction(null, dir));
+                   //ActionSenderVerticle.this.producer.write(new ModifyAction(null, dir));
                    actionObject.put("MODIFY",dir.getPath());
-                   WatcherVerticle.this.producer.write(actionObject);
+                   ActionSenderVerticle.this.producer.write(actionObject);
                    actionObject.clear();
-
                }
 
                @Override
                public void onDirectoryDelete(File dir) {
                    System.out.println(String.format("Directory %s deleted", dir.toString()));
-                   //WatcherVerticle.this.producer.write(new DeleteAction(null, dir));
+                   //ActionSenderVerticle.this.producer.write(new DeleteAction(null, dir));
                    actionObject.put("DELETE",dir.getPath());
-                   WatcherVerticle.this.producer.write(actionObject);
+                   ActionSenderVerticle.this.producer.write(actionObject);
                    actionObject.clear();
                }
 
@@ -135,7 +145,7 @@ public class WatcherVerticle extends AbstractVerticle {
     public void start(Future<Void> startFuture) throws Exception{
         observer.addListener(listener);
         monitor.addObserver(observer);
-        System.out.println("Starting WatchServiceVerticle");
+        System.out.println("Starting ActionsSenderVerticle");
         monitor.start();
     }
 

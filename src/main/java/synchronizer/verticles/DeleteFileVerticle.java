@@ -35,4 +35,5 @@ public class DeleteFileVerticle extends AbstractVerticle {
     public void stop(Future<Void> stopFuture) throws Exception{
         super.stop(stopFuture);
     }
+
 }

@@ -1,7 +1,6 @@
-package synchronizer.models;
+package synchronizer.models.actions;
 
 import io.vertx.core.Future;
-import synchronizer.exceptions.PathNotFound;
 
 import java.io.File;
 

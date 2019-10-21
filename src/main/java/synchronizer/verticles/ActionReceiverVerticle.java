@@ -4,11 +4,9 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageConsumer;
-import io.vertx.core.eventbus.MessageProducer;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import synchronizer.models.Action;
 import synchronizer.models.EventBusAddress;
+import synchronizer.models.SharedDataMapAddress;
 
 import java.nio.file.Path;
 
@@ -16,16 +14,28 @@ import java.nio.file.Path;
  * Class responsible for listening incoming actions and
  * deploy local verticles accordingly
  */
-public class ActionListenerVerticle extends AbstractVerticle {
+public class ActionReceiverVerticle extends AbstractVerticle {
 
     private EventBusAddress address;
 
     // produce file system actions to event bus
     private MessageConsumer<JsonObject> consumer;
 
-    public ActionListenerVerticle(EventBusAddress address){
-        this.address = address;
+    // object received from event bus
+    private JsonObject actionObject;
+
+    /**
+     *
+     * @param path
+     * @param address
+     * @param mapAddress
+     */
+    public ActionReceiverVerticle(Path path, EventBusAddress address, SharedDataMapAddress mapAddress){
+        // WHY INSTANTIATING new vertx() instance?
         EventBus eb = Vertx.vertx().eventBus();
+
+
+        this.address = address;
         this.consumer = eb.consumer(address.toString());
         this.consumer.handler(message ->{
             System.out.println("Receive from event bus %s" + message.body());
@@ -51,7 +61,7 @@ public class ActionListenerVerticle extends AbstractVerticle {
     @Override
     public void start(){
         // consuming file system action events
-        System.out.println("Starting ActionListenerVerticle");
+        System.out.println("Starting ActionReceiverVerticle");
         System.out.println("consuming from to: " + this.address.toString());
 
 

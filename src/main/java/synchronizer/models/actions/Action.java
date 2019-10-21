@@ -1,4 +1,4 @@
-package synchronizer.models;
+package synchronizer.models.actions;
 
 /**
  * File System action type
