@@ -72,7 +72,25 @@ Local discovery protocol
 ### API
 
 ### NOTES!
-
+### How To use:
+    * Add new stachostic task (executed asynchronically):
+        ```java
+        scheduleStachosticTask(new Task(){
+            @Override
+            public void run(){
+                System.out.println("storage applicaiton runs stachostic service!");
+            }
+        });
+        ```
+    * Add new sequent task (executed synchronically):
+        ```java
+         scheduleSequentTask(new Task() {
+            @Override
+            public void run() {
+                System.out.println("storage application executed sequent service #1");
+            }
+         });
+        ```
 RenameAction is not a model. Refactor models package or move all non-models to another package.
 
 // RUN ALL STORAGE SERVICES!!!!!
@@ -92,7 +110,7 @@ RenameAction is not a model. Refactor models package or move all non-models to a
 //
 //                    @Override
 //                    public void run() {
-//                        System.out.println("running sequent service");
+//                        System.out.println("running sequent task");
 //                    }
 //                });
 //

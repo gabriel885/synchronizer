@@ -23,9 +23,11 @@ public class Main {
             p2p.start(args);
 
         } catch(Exception e){
-            // storageApplication.kill(); TODO: check why kill() is not accessible
+            storageApplication.kill();
+            p2p.kill();
             throw new ApplicationFailure(e);
         }
+
 
 
 
@@ -35,6 +37,10 @@ public class Main {
         }catch (Exception e){
 
         }
+
+        storageApplication.kill();
+        p2p.kill();
+
         System.out.println("Finished running application");
 
     }

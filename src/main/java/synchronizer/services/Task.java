@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 
 // application service
-public abstract class Service implements Runnable {
+public abstract class Task implements Runnable {
 
     // default service timeout in seconds
     private final int defaultTimeout = 5;
@@ -23,14 +23,14 @@ public abstract class Service implements Runnable {
     // Services Socket
     protected Socket ipAddr;
 
-    // Service's context
+    // Task's context
     private Context ctx;
 
     private final AtomicBoolean running = new AtomicBoolean(false);
 
 
     // no context declared
-    public Service() {
+    public Task() {
         // TODO: Should not throw an exception. should throw future indicating an error
         //validInheritence();
         // if StorageService not superclass throw an error
@@ -44,7 +44,7 @@ public abstract class Service implements Runnable {
         for (Class c: allowed
         ) {
             if(!c.isInstance(this)){
-                callFailure(new Exception(String.format("%s is not allowed to inherit Service. Only StorageService is allowed",c.getName())));
+                callFailure(new Exception(String.format("%s is not allowed to inherit Task. Only StorageService is allowed",c.getName())));
             }
         }
     }

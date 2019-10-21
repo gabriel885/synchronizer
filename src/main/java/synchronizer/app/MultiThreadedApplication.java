@@ -1,8 +1,8 @@
 package synchronizer.app;
 
-import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
-import synchronizer.services.Service;
+import io.vertx.core.eventbus.EventBus;
+import synchronizer.services.Task;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -21,16 +21,19 @@ public abstract class MultiThreadedApplication {
     protected ServerSocket listener;
     protected InetAddress ipAddr;
 
-    // verticles the server can spawn
-    protected final ExecutorService stachosticServices;
+    // tasks the application can spawn that will run asynchronically
+    protected final ExecutorService stachosticTasks;
 
-    // Tasks are guaranteed to execute sequentially, and no more than
+    // Tasks are guaranteed to execute sequentially, synchronically
+    // no more than
     // one task will be active at any given time.
-    protected final ExecutorService sequentServices;
+    protected final ExecutorService sequentTasks;
 
-    // Vertx instance
+    // vertx instance
     protected final Vertx vertx = Vertx.vertx();
 
+    // vertx event bus
+    protected final EventBus eb = vertx.eventBus();
 
     // ExecutorService meta information
     class ServiceMeta {
@@ -57,8 +60,8 @@ public abstract class MultiThreadedApplication {
      * @param nThreads - max number of threads allowed in thread pool
      */
     public MultiThreadedApplication(int nThreads){
-        stachosticServices = new ThreadPoolExecutor(nThreads, ServiceMeta.maxPoolSize, ServiceMeta.keepAliveTime, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
-        sequentServices = Executors.newSingleThreadExecutor();
+        stachosticTasks = new ThreadPoolExecutor(nThreads, ServiceMeta.maxPoolSize, ServiceMeta.keepAliveTime, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
+        sequentTasks = Executors.newSingleThreadExecutor();
     }
 
     /**
@@ -69,32 +72,28 @@ public abstract class MultiThreadedApplication {
 
 
     /**
-     * Add service that to execute. Execution may be non-sequential
-     * @param service
+     * Add task that to execute. Execution may be non-sequential
+     * @param task
      */
-    protected final void addStachosticService(Service service){
-        stachosticServices.submit(service);
+    protected final void scheduleStachosticTask(Task task){
+        stachosticTasks.submit(task);
     }
 
-    /** //TODO: causes blocking operation!! Add timeout to each service!
-     * Add service that must be executed sequentially
-     * @param service
+    /** //TODO: causes blocking operation!! Add timeout to each task!
+     * Add task that must be executed sequentially
+     * @param task
      */
-    protected synchronized final Future addSequentService(Service service){
-        Future f = sequentServices.submit(service);
+    protected synchronized final Future<Void> scheduleSequentTask(Task task){
+        Future f = sequentTasks.submit(task);
         return f;
     }
 
     /**
-     * Kill all executor verticles
+     * Kill all executors tasks, vertx instances, event bus addresses and shared data
+     * the application may use
      * @throws IOException
      */
-    protected final void kill(){
-        System.out.println("Killing stachistic and sequent verticles");
-        stachosticServices.shutdownNow();
-        sequentServices.shutdownNow();
-    }
-
+    protected abstract void kill();
 
     /**
      * @return hosts IP address
@@ -108,6 +107,7 @@ public abstract class MultiThreadedApplication {
         }
         return myIp;
     }
+
 
     @Override
     public String toString(){

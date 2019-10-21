@@ -8,6 +8,7 @@ import synchronizer.exceptions.PathNotDirectory;
 import synchronizer.exceptions.PathNotFound;
 import synchronizer.models.EventBusAddress;
 import synchronizer.models.SharedDataMapAddress;
+import synchronizer.services.Task;
 import synchronizer.verticles.*;
 
 import java.io.File;
@@ -27,18 +28,14 @@ public class StorageApplication extends MultiThreadedApplication {
             "Usage:\n" +
             "  java synchronizer -p <path to monitorable directory>\n";
 
-    // All event bus addresses StorageApplication use
-    private Set<EventBusAddress> WatcherEventBusAddresses;
-
 
 
     public StorageApplication(){
-        // append all event bus addresses
-        WatcherEventBusAddresses = new HashSet<EventBusAddress>() {{
-            add(new EventBusAddress("filesystem.actions"));
-            // add more event
-        }};
+
+
     }
+
+
     /**
      * -p <path of monitorable directory>
      * @param args
@@ -60,15 +57,16 @@ public class StorageApplication extends MultiThreadedApplication {
                 System.out.println(String.format("%s: starting storage application on path %s",getIpAddress(), path.toString()));
 
                 // deploy all storage application verticles
-                Vertx vertx = Vertx.vertx();
-                EventBus eb = vertx.eventBus();
 
-                vertx.deployVerticle(new ActionReceiverVerticle(path, new EventBusAddress("filesystem.actions"), new SharedDataMapAddress("received.path.structure")));
+
+                vertx.deployVerticle(new ActionReceiverVerticle(path, new EventBusAddress("filesystem.incoming.actions"), new SharedDataMapAddress("global.path.structure")));
                 //Thread.sleep(5000);
-                vertx.deployVerticle(new ActionSenderVerticle(path, new EventBusAddress("filesystem.actions"), new SharedDataMapAddress("sent.path.structure")));
+                vertx.deployVerticle(new ActionSenderVerticle(path, new EventBusAddress("filesystem.outcoming.actions"), new SharedDataMapAddress("local.path.structure")));
 
                 // scan local file system path structure
                 vertx.deployVerticle(new LocalFileSystemWalkerVerticle(path));
+
+
 
                 // https://www.codota.com/code/java/methods/io.vertx.core.Vertx/setPeriodic
                 vertx.setPeriodic(1000, v -> eb.publish("news-feed", "Some news!"));
@@ -106,6 +104,7 @@ public class StorageApplication extends MultiThreadedApplication {
                     }
                 });
 
+
             }
         }
         else{
@@ -114,6 +113,13 @@ public class StorageApplication extends MultiThreadedApplication {
     }
 
 
+    @Override
+    public void kill(){
+        System.out.println("Storage application shutting down...");
+        stachosticTasks.shutdownNow();
+        sequentTasks.shutdownNow();
+        vertx.close();
+    }
 
 
 

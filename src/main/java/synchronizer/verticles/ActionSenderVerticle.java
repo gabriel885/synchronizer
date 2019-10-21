@@ -15,15 +15,15 @@ import java.io.File;
 import java.nio.file.Path;
 
 // ActionSenderVerticle watch for local file system alternations.
-// It publishes the actions to the event bus
-// Uses Observable pattern
+// It publishes the actions to the event bus.
+// It uses Observable pattern.
 public class ActionSenderVerticle extends AbstractVerticle {
 
     // produce file system actions to event bus
     private MessageProducer<JsonObject> producer;
 
     // passing actionObject to event bus
-    private JsonObject actionObject;
+    //private JsonObject actionObject;
 
     // observer
     private FileAlterationObserver observer;
@@ -34,15 +34,13 @@ public class ActionSenderVerticle extends AbstractVerticle {
 
     private final int  MONITOR_INTERVAL = 400; // milliseconds
 
-
     /**
      *
-     * @param path
-     * @param address
-     * @param mapAddress
+     * @param path - local path
+     * @param address - event bus address to broadcast outcoming alternations
+     * @param localMapAddress - SharedData map address for local path structure
      */
-    public ActionSenderVerticle(Path path, EventBusAddress address, SharedDataMapAddress mapAddress){
-        this.actionObject = new JsonObject();
+    public ActionSenderVerticle(Path path, EventBusAddress address, SharedDataMapAddress localMapAddress){
 
         EventBus eb = Vertx.vertx().eventBus();
         this.producer = eb.publisher(address.toString());
@@ -51,9 +49,12 @@ public class ActionSenderVerticle extends AbstractVerticle {
         this.observer = new FileAlterationObserver(path.toString());
         this.monitor = new FileAlterationMonitor(MONITOR_INTERVAL);
 
-        this.actionObject = new JsonObject();
 
         this.listener = new FileAlterationListener(){
+
+            // action object
+            JsonObject actionObject = new JsonObject();
+
 
                @Override
                public void onStart(org.apache.commons.io.monitor.FileAlterationObserver observer) {
@@ -85,7 +86,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
                    actionObject.clear();
 
                    // update last modification time of a file
-                   synchronizer.models.File f = (synchronizer.models.File)vertx.sharedData().getLocalMap(mapAddress.toString()).get(file.toString());
+                   synchronizer.models.File f = (synchronizer.models.File)vertx.sharedData().getLocalMap(localMapAddress.toString()).get(file.toString());
                    f.updateLastModification();
                }
 
@@ -100,7 +101,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
                    actionObject.clear();
 
                    // update SharedDataApi
-                   vertx.sharedData().getLocalMap(mapAddress.toString()).remove(file.toString());
+                   vertx.sharedData().getLocalMap(localMapAddress.toString()).remove(file.toString());
                }
 
 
@@ -111,6 +112,8 @@ public class ActionSenderVerticle extends AbstractVerticle {
                    actionObject.put("CREATE",dir.getPath());
                    ActionSenderVerticle.this.producer.write(actionObject);
                    actionObject.clear();
+
+
                }
 
                @Override
@@ -147,10 +150,12 @@ public class ActionSenderVerticle extends AbstractVerticle {
         monitor.addObserver(observer);
         System.out.println("Starting ActionsSenderVerticle");
         monitor.start();
+        startFuture.complete();
     }
 
     @Override
     public void stop(Future<Void> stopFuture) throws Exception{
+        // TODO: vertx told not to call stop()
         super.stop(stopFuture);
     }
 

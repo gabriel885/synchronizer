@@ -26,11 +26,11 @@ public class ActionReceiverVerticle extends AbstractVerticle {
 
     /**
      *
-     * @param path
-     * @param address
-     * @param mapAddress
+     * @param path - local path
+     * @param address - event bus address to listen for incoming alternations
+     * @param globalMapAddress - SharedData map address for global path structure (what's received)
      */
-    public ActionReceiverVerticle(Path path, EventBusAddress address, SharedDataMapAddress mapAddress){
+    public ActionReceiverVerticle(Path path, EventBusAddress address, SharedDataMapAddress globalMapAddress){
         // WHY INSTANTIATING new vertx() instance?
         EventBus eb = Vertx.vertx().eventBus();
 
@@ -69,7 +69,7 @@ public class ActionReceiverVerticle extends AbstractVerticle {
 
     @Override
     public void stop(){
-        System.out.println("action listened verticle is stopped");
+
     }
 
 

@@ -15,5 +15,11 @@ public class P2PApplication extends MultiThreadedApplication {
 
     }
 
+    @Override
+    public void kill() {
+        System.out.println("P2PApplication is shutting down...");
+        vertx.close();
+    }
+
 
 }

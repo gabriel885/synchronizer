@@ -1,4 +1,4 @@
-import synchronizer.services.Service;
+import synchronizer.services.Task;
 import synchronizer.utils.RandomString;
 
 import java.io.File;
@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
  * Usage - new ImitateFileCreations();
  * Used for initial file creation for testing
  */
-public class ImitateFileCreations extends Service {
+public class ImitateFileCreations extends Task {
 
     private static final int MAX_DELAY = 4; // maximum file creation delay
     private static final int MIN_DELAY = 2; // minimum file creation delay

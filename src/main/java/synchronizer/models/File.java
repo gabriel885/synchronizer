@@ -14,10 +14,6 @@ public class File implements Shareable {
         this.lastModified = System.currentTimeMillis() / 1000L;
     }
 
-    public void modify(){
-
-    }
-
     // update last file modification
     public void updateLastModification(){
         this.lastModified = System.currentTimeMillis() / 1000L;
