@@ -25,8 +25,7 @@ public abstract class MultiThreadedApplication {
     protected final ExecutorService stachosticTasks;
 
     // Tasks are guaranteed to execute sequentially, synchronically
-    // no more than
-    // one task will be active at any given time.
+    // no more than one task will be active at any given time.
     protected final ExecutorService sequentTasks;
 
     // vertx instance
@@ -36,7 +35,7 @@ public abstract class MultiThreadedApplication {
     protected final EventBus eb = vertx.eventBus();
 
     // ExecutorService meta information
-    class ServiceMeta {
+    class TaskMeta {
         static final int maxPoolSize = 10; // the maximum number of threads to allow in the pool
 
         // the number of threads to keep in the pool, even
@@ -53,14 +52,14 @@ public abstract class MultiThreadedApplication {
     protected List<TimerTask> repeatedTasks;
 
     public MultiThreadedApplication(){
-        this(ServiceMeta.maxPoolSize);
+        this(TaskMeta.maxPoolSize);
     }
 
     /**
      * @param nThreads - max number of threads allowed in thread pool
      */
     public MultiThreadedApplication(int nThreads){
-        stachosticTasks = new ThreadPoolExecutor(nThreads, ServiceMeta.maxPoolSize, ServiceMeta.keepAliveTime, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
+        stachosticTasks = new ThreadPoolExecutor(nThreads, TaskMeta.maxPoolSize, TaskMeta.keepAliveTime, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
         sequentTasks = Executors.newSingleThreadExecutor();
     }
 

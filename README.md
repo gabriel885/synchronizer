@@ -69,28 +69,47 @@ Local discovery protocol
 ![pods](docs/pods.png)
 
 
-### API
+### Implementation Guide:
 
-### NOTES!
-### How To use:
-    * Add new stachostic task (executed asynchronically):
-        ```java
-        scheduleStachosticTask(new Task(){
+##### MultiThreadedApplication
+   - Initialise an application:
+      ``` java
+      class Application extends MultiThreadedApplication{
+        @Override
+        public void kill(){}
+      }
+      
+      class Program{
+        public void main(String [] args){
+            Application app = new Application();
+        }
+      } 
+      ```
+   - Add new stachostic task (executed asynchronically) to application:
+      ``` java
+        app.scheduleStachosticTask(new Task(){
             @Override
             public void run(){
                 System.out.println("storage applicaiton runs stachostic service!");
             }
         });
         ```
-    * Add new sequent task (executed synchronically):
-        ```java
-         scheduleSequentTask(new Task() {
+   - Add new sequent task (executed synchronically) to application:
+        ``` java
+         app.scheduleSequentTask(new Task() {
             @Override
             public void run() {
                 System.out.println("storage application executed sequent service #1");
             }
          });
         ```
+        
+        
+        
+        
+        
+### NOTES!
+
 RenameAction is not a model. Refactor models package or move all non-models to another package.
 
 // RUN ALL STORAGE SERVICES!!!!!
