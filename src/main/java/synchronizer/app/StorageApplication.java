@@ -2,22 +2,31 @@ package synchronizer.app;
 
 import io.vertx.core.*;
 import io.vertx.core.eventbus.EventBus;
+
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.shareddata.SharedData;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import synchronizer.exceptions.PathNotDirectory;
 import synchronizer.exceptions.PathNotFound;
 import synchronizer.models.EventBusAddress;
 import synchronizer.models.SharedDataMapAddress;
-import synchronizer.services.Task;
-import synchronizer.verticles.*;
+
+import synchronizer.verticles.storage.ActionReceiverVerticle;
+import synchronizer.verticles.storage.ActionSenderVerticle;
+import synchronizer.verticles.storage.LocalFileSystemWalkerVerticle;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
 // StorageApplication responsible for deploying all
-// verticles regarding local file system changes.
+// verticles regarding local file system alternations.
 public class StorageApplication extends MultiThreadedApplication {
+
+    // logger
+    private static final Logger logger = LogManager.getLogger(StorageApplication.class);
 
     // Local path for storage application to synchronize
     private Path path;
@@ -32,9 +41,7 @@ public class StorageApplication extends MultiThreadedApplication {
 
     public StorageApplication(){
 
-
     }
-
 
     /**
      * -p <path of monitorable directory>
@@ -54,55 +61,71 @@ public class StorageApplication extends MultiThreadedApplication {
                     throw new PathNotDirectory(String.format("Path %s must be a directory",dirPath));
                 }
                 path = dirPath.toPath();
-                System.out.println(String.format("%s: starting storage application on path %s",getIpAddress(), path.toString()));
+                //System.out.println(String.format("%s: starting storage application on path %s",getIpAddress(), path.toString()));
+
+                logger.warn(String.format("%s: starting Storage application on path %s",getIpAddress(), path.toString()));
 
                 // deploy all storage application verticles
-
-
                 vertx.deployVerticle(new ActionReceiverVerticle(path, new EventBusAddress("filesystem.incoming.actions"), new SharedDataMapAddress("global.path.structure")));
                 //Thread.sleep(5000);
                 vertx.deployVerticle(new ActionSenderVerticle(path, new EventBusAddress("filesystem.outcoming.actions"), new SharedDataMapAddress("local.path.structure")));
 
-                // scan local file system path structure
-                vertx.deployVerticle(new LocalFileSystemWalkerVerticle(path));
-
-
-
-                // https://www.codota.com/code/java/methods/io.vertx.core.Vertx/setPeriodic
-                vertx.setPeriodic(1000, v -> eb.publish("news-feed", "Some news!"));
-                vertx.deployVerticle(new Verticle() {
-                    @Override
-                    public Vertx getVertx() {
-                        return null;
-                    }
-
-                    @Override
-                    public void init(Vertx vertx, Context context) {
-
-                    }
-
-                    @Override
-                    public void start(Future<Void> startFuture) throws Exception {
-                        EventBus eb = vertx.eventBus();
-                        eb.consumer("news-feed", message ->{
-                            System.out.println("Consumed dummy: " + message.body());
-
-                            // get updated path structure using shared data
-                            SharedData sd = vertx.sharedData();
-                            String name = "files";
-                            LocalMap<String, synchronizer.models.File> localMap = vertx.sharedData().getLocalMap(name);
-                            for (Map.Entry<String, synchronizer.models.File> entry: localMap.entrySet()){
-                               //System.out.println(entry.getKey());
-                            }
-
-                        });
-                    }
-
-                    @Override
-                    public void stop(Future<Void> stopFuture) throws Exception {
-
-                    }
+                // scan local file system path structure every 10 seconds.
+                vertx.setPeriodic(10000,v->{
+                    vertx.deployVerticle(new LocalFileSystemWalkerVerticle(path));
                 });
+
+//                //vertx.deployVerticle(new SyncVerticle());
+//
+//                // https://www.codota.com/code/java/methods/io.vertx.core.Vertx/setPeriodic
+//                vertx.setPeriodic(5000, v -> {
+//                    // get updated path structure using shared data
+//                    SharedData sd = vertx.sharedData();
+//                    String name = "files";
+//                    LocalMap<String, synchronizer.models.File> localMap = vertx.sharedData().getLocalMap("global.path.structure");
+//                    // iterate path map
+//                    String message = "";
+//
+//
+//                    // TODO: improve this! can cause blocking operation?
+//                    // terrible!
+//                    for (Map.Entry<String, synchronizer.models.File> entry: localMap.entrySet()){
+//                        //System.out.println(entry.getKey());
+//                        message = message +"\n"+entry.getKey();
+//                    }
+//
+//                    eb.publish("files", message);
+//
+//
+//                });
+//
+//                // consume path map
+//                vertx.deployVerticle(new Verticle() {
+//                    @Override
+//                    public Vertx getVertx() {
+//                        return null;
+//                    }
+//
+//                    @Override
+//                    public void init(Vertx vertx, Context context) {
+//
+//                    }
+//
+//                    @Override
+//                    public void start(Future<Void> startFuture) throws Exception {
+//                        EventBus eb = vertx.eventBus();
+//                        eb.consumer("files", message ->{
+//                            logger.info(message.body());
+//                        });
+//                    }
+//
+//                    @Override
+//                    public void stop(Future<Void> stopFuture) throws Exception {
+//
+//                    }
+//                });
+
+
 
 
             }
@@ -115,7 +138,7 @@ public class StorageApplication extends MultiThreadedApplication {
 
     @Override
     public void kill(){
-        System.out.println("Storage application shutting down...");
+        logger.warn("Storage application shutting down...");
         stachosticTasks.shutdownNow();
         sequentTasks.shutdownNow();
         vertx.close();

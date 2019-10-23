@@ -1,4 +1,4 @@
-package synchronizer.services;
+package synchronizer.tasks;
 
 import java.net.Socket;
 import java.time.Duration;
@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
-// application service
+// Application's Task
 public abstract class Task implements Runnable {
 
     // default service timeout in seconds
@@ -64,7 +64,7 @@ public abstract class Task implements Runnable {
      * @param timeout
      * @return
      */
-    public final Context Service(long timeout){
+    public final Context Task(long timeout){
         this.ctx = new Context(timeout);
         return ctx;
     }

@@ -1,4 +1,4 @@
-import synchronizer.services.Task;
+import synchronizer.tasks.Task;
 import synchronizer.utils.RandomString;
 
 import java.io.File;

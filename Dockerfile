@@ -1,12 +1,13 @@
 FROM openjdk:8
 
-# create directory for java application "synchronizer"
+# create directory for java application
 RUN mkdir -p /java/synchronizer
-COPY target /java/synchronizer
-WORKDIR /java/synchronizer/classes/synchronizer
+# copy fat jar to container
+COPY target/synchronizer-jar-with-dependencies.jar /java/synchronizer
+WORKDIR /java/synchronizer
 
-# put default monitorable files
+# default monitorable files
 RUN mkdir -p /opt/dir
 RUN echo "monitorable file" > /opt/dir/example.txt
 
-CMD ["java", "-cp", "main.java.synchronizer.synchronizer.Main", "-p", "/opt/dir"]
+CMD ["java", "-jar", "synchronizer-jar-with-dependencies.jar", "-p", "/opt/dir"]

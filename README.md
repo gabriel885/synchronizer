@@ -2,16 +2,21 @@
 ![assignment](docs/assignment.png)
 
 ## Objective
-Java program called "synchonizer" responsible for synchronizing content 
-between other computers that runs "synchronizer".
+Java program called "synchonizer" responsible for synchronizing path file data  
+between multiple computers.
 
+## Prerequesites
+ * JDK 1.8
+ * Docker (optional)
+    
 ### Principles
- * FS watch
-    * fs_windows
-    * fs_unix
-    * fs_eventTypes
- * FS Walk (walk recursively descends path)
- 
+ * EventBus Actions
+    *
+    *
+    *
+ * SharedData 
+    * local.path.structure
+    * global.path.structure
  * Events
     * localChangeDetected
     * remoteChangeDetected
@@ -36,7 +41,7 @@ between other computers that runs "synchronizer".
     * add computer with Unique ID and IP
     
     
-### Design
+### Design/Functionality
  * Multi Threaded Server
     * Storage Application
         * local directory listener
@@ -61,6 +66,8 @@ Local discovery protocol
 
 ### Dependencies
 * [vertex](https://vertx.io)
+* [apache commons-net]()
+* [apache commons-io]()
 
 ### How to install
 1) mvn install
@@ -68,11 +75,15 @@ Local discovery protocol
 ### Imitating isolated hosts docker containers (each pod runs a container of "synchronizer")
 ![pods](docs/pods.png)
 
+## When to use verticles and when to use threads?
+## verticles vs Threads
+## Task vs Service
+
 
 ### Implementation Guide:
 
 ##### MultiThreadedApplication
-   - Initialise an application:
+   - Initialize an application:
       ``` java
       class Application extends MultiThreadedApplication{
         @Override
@@ -90,7 +101,7 @@ Local discovery protocol
         app.scheduleStachosticTask(new Task(){
             @Override
             public void run(){
-                System.out.println("storage applicaiton runs stachostic service!");
+                System.out.println("storage applicaiton runs stachostic task!");
             }
         });
         ```
@@ -99,11 +110,20 @@ Local discovery protocol
          app.scheduleSequentTask(new Task() {
             @Override
             public void run() {
-                System.out.println("storage application executed sequent service #1");
+                System.out.println("storage application executed sequent task #1");
             }
+         });
+         app.scheduleSequentTask(new Task() {
+             @Override
+             public void run() {
+                System.out.println("storage application executed sequent task #2");
+             }
          });
         ```
         
+##### StorageApplication
+
+##### P2PApplication
         
         
         
@@ -111,6 +131,9 @@ Local discovery protocol
 ### NOTES!
 
 RenameAction is not a model. Refactor models package or move all non-models to another package.
+
+``` java
+
 
 // RUN ALL STORAGE SERVICES!!!!!
                 // System.out.println("renaming file foo.txt");
@@ -145,3 +168,6 @@ RenameAction is not a model. Refactor models package or move all non-models to a
 //                addSequentService(new RenameFileService(Paths.get(path.toString(),"ilya.txt"),"newIlya.txt"));
 
 
+
+
+```

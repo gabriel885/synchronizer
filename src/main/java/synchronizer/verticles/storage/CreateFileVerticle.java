@@ -1,4 +1,4 @@
-package synchronizer.verticles;
+package synchronizer.verticles.storage;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;

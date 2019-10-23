@@ -2,11 +2,11 @@ package synchronizer.app;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
-import synchronizer.services.Task;
+import synchronizer.tasks.Task;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.TimerTask;
 import java.util.concurrent.*;
@@ -15,16 +15,12 @@ import java.util.concurrent.*;
 /**
  * Multithreaded application
  */
-// TODO: check if generics is required here or not
 public abstract class MultiThreadedApplication {
-
-    protected ServerSocket listener;
-    protected InetAddress ipAddr;
 
     // tasks the application can spawn that will run asynchronically
     protected final ExecutorService stachosticTasks;
 
-    // Tasks are guaranteed to execute sequentially, synchronically
+    // tasks are guaranteed to execute sequentially, synchronically
     // no more than one task will be active at any given time.
     protected final ExecutorService sequentTasks;
 
@@ -48,26 +44,27 @@ public abstract class MultiThreadedApplication {
         static final long keepAliveTime = 0L;
     }
 
-    // repeated verticles
+    // repeated tasks
     protected List<TimerTask> repeatedTasks;
 
-    public MultiThreadedApplication(){
+    public MultiThreadedApplication() {
         this(TaskMeta.maxPoolSize);
+
     }
 
     /**
      * @param nThreads - max number of threads allowed in thread pool
      */
     public MultiThreadedApplication(int nThreads){
-        stachosticTasks = new ThreadPoolExecutor(nThreads, TaskMeta.maxPoolSize, TaskMeta.keepAliveTime, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
-        sequentTasks = Executors.newSingleThreadExecutor();
+        this.stachosticTasks = new ThreadPoolExecutor(nThreads, TaskMeta.maxPoolSize, TaskMeta.keepAliveTime, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
+        this.sequentTasks = Executors.newSingleThreadExecutor();
     }
 
     /**
      * Start application with flag arguments
      * @param args
      */
-    protected abstract void start(String[] args) throws Throwable;
+    public abstract void start(String[] args) throws Exception;
 
 
     /**
@@ -87,20 +84,29 @@ public abstract class MultiThreadedApplication {
         return f;
     }
 
+
+
     /**
-     * Kill all executors tasks, vertx instances, event bus addresses and shared data
-     * the application may use
-     * @throws IOException
+     * Kill all resources the application may use such as: executors tasks, vertx instances
+     * event bus addresses and shared data maps
      */
-    protected abstract void kill();
+    public abstract void kill();
 
     /**
      * @return hosts IP address
      */
     protected String getIpAddress(){
+        InetAddress ipAddr;
+        try{
+            ipAddr =  InetAddress.getLocalHost();
+        }catch (UnknownHostException e){
+            System.out.println(e.getMessage());
+            return "";
+        }
+
         String myIp = new String();
         try{
-            myIp = this.ipAddr.getLocalHost().getHostAddress();
+            myIp = ipAddr.getLocalHost().getHostAddress();
         } catch(Exception e){
             System.out.println(e);
         }
