@@ -80,8 +80,10 @@ Local discovery protocol
 ## Task vs Service
 
 
+
 ### Implementation Guide:
 
+## scatter-gather protocol
 ##### MultiThreadedApplication
    - Initialize an application:
       ``` java
@@ -123,10 +125,77 @@ Local discovery protocol
         
 ##### StorageApplication
 
+* __Scan periodically file system__
+```java
+    // scan local file system path structure every 10 seconds.
+    vertx.setPeriodic(10000,v->{
+        vertx.deployVerticle(new LocalFileSystemWalkerVerticle(path));
+    });
+```
+* __Consume EventBus messages__
+```java
+ // consume path map
+ vertx.deployVerticle(new Verticle() {
+     @Override
+     public Vertx getVertx() {
+         return null;
+     }
+
+     @Override
+     public void init(Vertx vertx, Context context) {
+
+     }
+
+     @Override
+     public void start(Future<Void> startFuture) throws Exception {
+         EventBus eb = vertx.eventBus();
+         eb.consumer("files", message ->{
+             logger.info(message.body());
+         });
+     }
+
+     @Override
+     public void stop(Future<Void> stopFuture) throws Exception {
+     }
+ });
+```
 ##### P2PApplication
         
         
         
+#### Demo Time!
+
+1) Create docker network
+```bash
+# class B subnet, broadcast 172.18.255.255
+docker network create --subnet=172.18.0.0/16 mynet123
+```
+2) Define peers IP addresses and ports in __peers.txt__ file
+```bash
+172.18.0.10:2020
+172.18.0.15:2020
+172.18.0.17:2020
+172.18.0.20:2020
+```
+
+3) run docker containers with "synchronizer" software
+
+Client 1:
+```bash
+docker run --net mynet123 --ip 172.18.0.10 -it synchronizer:latest  
+```
+Client 2:
+```bash
+docker run --net mynet123 --ip 172.18.0.15 -it synchronizer:latest  
+```
+Client 3:
+```bash
+docker run --net mynet123 --ip 172.18.0.17 -it synchronizer:latest  
+```
+Client 4:
+```bash
+docker run --net mynet123 --ip 172.18.0.20 -it synchronizer:latest  
+```
         
 ### NOTES!
 

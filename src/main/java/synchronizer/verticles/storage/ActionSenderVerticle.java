@@ -86,6 +86,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
                    // create action object and send to the event bus
                    actionObject.put("CREATE",file.getPath());
                    ActionSenderVerticle.this.producer.write(actionObject);
+                   logger.debug(actionObject.toString());
                    actionObject.clear();
 
                    // update local.path.structure SharedData
@@ -100,6 +101,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
                    // ActionSenderVerticle.this.producer.write(new ModifyAction(null, file));
                    actionObject.put("MODIFY",file.getPath());
                    ActionSenderVerticle.this.producer.write(actionObject);
+                   logger.debug(actionObject.toString());
                    actionObject.clear();
 
 
@@ -118,6 +120,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
                    //ActionSenderVerticle.this.producer.write(new DeleteAction(null, file));
                    actionObject.put("DELETE",file.getPath());
                    ActionSenderVerticle.this.producer.write(actionObject);
+                   logger.debug(actionObject.toString());
                    actionObject.clear();
 
                    // update local.path.structure SharedData
@@ -131,6 +134,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
                    //ActionSenderVerticle.this.producer.write(new CreateAction(null, dir));
                    actionObject.put("CREATE",dir.getPath());
                    ActionSenderVerticle.this.producer.write(actionObject);
+                   logger.debug(actionObject.toString());
                    actionObject.clear();
 
 
@@ -142,6 +146,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
                    //ActionSenderVerticle.this.producer.write(new ModifyAction(null, dir));
                    actionObject.put("MODIFY",dir.getPath());
                    ActionSenderVerticle.this.producer.write(actionObject);
+                   logger.debug(actionObject.toString());
                    actionObject.clear();
                }
 
@@ -150,7 +155,9 @@ public class ActionSenderVerticle extends AbstractVerticle {
                    logger.info(String.format("Directory %s deleted", dir.toString()));
                    //ActionSenderVerticle.this.producer.write(new DeleteAction(null, dir));
                    actionObject.put("DELETE",dir.getPath());
+                   logger.info(actionObject.toString());
                    ActionSenderVerticle.this.producer.write(actionObject);
+                   logger.debug(actionObject.toString());
                    actionObject.clear();
                }
 
@@ -168,7 +175,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
     public void start(Future<Void> startFuture) throws Exception{
         observer.addListener(listener);
         monitor.addObserver(observer);
-        logger.info("Starting ActionsSenderVerticle");
+        logger.debug("Starting ActionsSenderVerticle");
         monitor.start();
         startFuture.complete();
     }

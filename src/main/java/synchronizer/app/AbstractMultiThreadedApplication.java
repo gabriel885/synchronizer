@@ -5,7 +5,6 @@ import io.vertx.core.eventbus.EventBus;
 import synchronizer.tasks.Task;
 
 import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.TimerTask;
@@ -15,7 +14,7 @@ import java.util.concurrent.*;
 /**
  * Multithreaded application
  */
-public abstract class MultiThreadedApplication {
+public abstract class AbstractMultiThreadedApplication{
 
     // tasks the application can spawn that will run asynchronically
     protected final ExecutorService stachosticTasks;
@@ -47,7 +46,8 @@ public abstract class MultiThreadedApplication {
     // repeated tasks
     protected List<TimerTask> repeatedTasks;
 
-    public MultiThreadedApplication() {
+
+    public AbstractMultiThreadedApplication() {
         this(TaskMeta.maxPoolSize);
 
     }
@@ -55,16 +55,15 @@ public abstract class MultiThreadedApplication {
     /**
      * @param nThreads - max number of threads allowed in thread pool
      */
-    public MultiThreadedApplication(int nThreads){
+    public AbstractMultiThreadedApplication(int nThreads){
         this.stachosticTasks = new ThreadPoolExecutor(nThreads, TaskMeta.maxPoolSize, TaskMeta.keepAliveTime, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
         this.sequentTasks = Executors.newSingleThreadExecutor();
     }
 
     /**
-     * Start application with flag arguments
-     * @param args
+     * Start application
      */
-    public abstract void start(String[] args) throws Exception;
+    public abstract void start() throws Exception;
 
 
     /**

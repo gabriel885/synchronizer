@@ -1,5 +1,6 @@
 package synchronizer;
 
+import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.app.P2PApplication;
@@ -11,26 +12,37 @@ public class Main {
     // logger
     private static final Logger logger = LogManager.getLogger(Main.class);
 
-    public static void main(String [] args) throws ApplicationFailure {
 
-        // storage application
-        StorageApplication storageApplication = new StorageApplication();
+    public static void main(String [] args){
 
-        // p2p application
-        P2PApplication p2p = new P2PApplication();
+        CliParser parser = new CliParser();
+
+        CommandLine cmd = parser.parse(args);
 
         try{
+            // storage application
+            StorageApplication storageApplication = new StorageApplication(cmd.getOptionValue("path"));
+            storageApplication.start();
 
-            storageApplication.start(args);
-            p2p.start(args);
+            // p2p application
+            P2PApplication p2p = new P2PApplication(cmd.getOptionValues("devices"));
+            p2p.start();
 
         } catch(Exception e){
-            storageApplication.kill();
-            p2p.kill();
             logger.error(new ApplicationFailure(e));
         }
 
+        // p2p application
+        //P2PApplication p2p = new P2PApplication();
 
+//        try{
+//            storageApplication.start(args);
+//            p2p.start(args);
+//        } catch(Exception e){
+//            storageApplication.kill();
+//            p2p.kill();
+//            logger.error(new ApplicationFailure(e));
+//        }
 
 
 //        storageApplication.kill();

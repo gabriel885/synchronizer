@@ -21,4 +21,4 @@ run-shell:
 kill:
 	docker stop $(docker ps -q --filter ancestor=<synchronizer:latest> )
 
-.PHONY: run run-client-1 run-client-2 run-client-3 run-client-4 build kill
+.PHONY: run run-client-1 run-client-2 run-client-3 run-client-4 build kill                                       4.85G RAM

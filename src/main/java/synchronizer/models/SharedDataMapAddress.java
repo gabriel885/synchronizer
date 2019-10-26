@@ -18,9 +18,7 @@ public class SharedDataMapAddress {
      * returning the actual reference to registered SharedData maps
      * @return
      */
-    public Set<String> getRegisteredMaps(){
-       return this.getRegisteredMaps();
-    }
+    public Set<String> getRegisteredMaps(){ return registeredMaps; }
 
     @Override
     public String toString(){ return this.mapName; }

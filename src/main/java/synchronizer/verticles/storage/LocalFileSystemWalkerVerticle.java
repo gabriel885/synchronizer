@@ -25,6 +25,7 @@ public class LocalFileSystemWalkerVerticle extends AbstractVerticle {
         this.path = path;
     }
 
+    // TODO: BAD!!
     @Override
     public void start(Future<Void> startFuture) {
         FileSystem fs = vertx.fileSystem();
@@ -35,16 +36,19 @@ public class LocalFileSystemWalkerVerticle extends AbstractVerticle {
         files = fs.readDirBlocking(this.path.toString());
 
         // Note: File implements io.vertx.core.shareddata.Shareable
-        LocalMap<String, synchronizer.models.File> pathData =  sharedData.getLocalMap("local.path.structure");
+        LocalMap<String, synchronizer.models.File> pathMap =  sharedData.getLocalMap("local.path.structure");
+        pathMap.clear();
 
         for (String file: files){
-            pathData.put(file,new File(file));
+            pathMap.put(file,new File(file));
         }
+
+
         logger.info("Periodic Scan:");
 
         StringBuilder mapAsString = new StringBuilder();
         mapAsString.append("\n");
-        for (String fileName: pathData.keySet()){
+        for (String fileName: pathMap.keySet()){
             mapAsString.append(fileName+"\n");
         }
         logger.info(mapAsString.toString());
