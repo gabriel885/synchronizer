@@ -6,7 +6,7 @@ Java program called "synchonizer" responsible for synchronizing path file data
 between multiple computers.
 
 ## Prerequesites
- * JDK 1.8
+ * JDK 1.8 
  * Docker (optional)
     
 ### Principles
@@ -68,6 +68,7 @@ Local discovery protocol
 * [vertex](https://vertx.io)
 * [apache commons-net]()
 * [apache commons-io]()
+* [apache-commons-cli]()
 
 ### How to install
 1) mvn install
@@ -158,9 +159,23 @@ Local discovery protocol
      public void stop(Future<Void> stopFuture) throws Exception {
      }
  });
+* __Pubblish EventBus messages__
+
 ```
 ##### P2PApplication
-        
+* Add TCP peer to the network
+```java
+    // add peer on host 10.0.0.5 and listening port 2017
+    vertx.deployVerticle(new TCPPeer("10.0.0.5",2017));
+
+```
+* Consume EventBust action messages
+```java
+
+
+```
+
+
         
         
 #### Demo Time!
@@ -182,7 +197,7 @@ docker network create --subnet=172.18.0.0/16 mynet123
 
 Client 1:
 ```bash
-docker run --net mynet123 --ip 172.18.0.10 -it synchronizer:latest  
+docker run --net mynet123 --ip 172.18.0.10 synchronizer:latest  
 ```
 Client 2:
 ```bash

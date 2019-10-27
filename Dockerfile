@@ -10,4 +10,4 @@ WORKDIR /java/synchronizer
 RUN mkdir -p /opt/dir
 RUN echo "monitorable file" > /opt/dir/example.txt
 
-CMD ["java", "-jar", "synchronizer-jar-with-dependencies.jar", "-p", "/opt/dir"]
+CMD ["java", "-jar", "synchronizer-jar-with-dependencies.jar", "-p", "/opt/dir", "-d" ,"172.18.0.10:2020","172.18.0.15:2020"];

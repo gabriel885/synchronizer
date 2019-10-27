@@ -68,6 +68,7 @@ public class NetPeer extends AbstractPeer {
         }
         this.peerPort = port;
 
+        // TODO: THROW a warning exception if host/port are invalid!!
         // for debugging purposes
         new InetSocketAddress(host,port);
 

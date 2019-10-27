@@ -56,6 +56,8 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
         vertx.deployVerticle(new ActionReceiverVerticle(path, new EventBusAddress("filesystem.incoming.actions"), new SharedDataMapAddress("global.path.structure")));
 
         vertx.deployVerticle(new ActionSenderVerticle(path, new EventBusAddress("filesystem.outcoming.actions"), new SharedDataMapAddress("local.path.structure")));
+
+
     }
 
 

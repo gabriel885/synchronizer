@@ -1,13 +1,23 @@
 package synchronizer.models;
 
 import io.vertx.core.shareddata.Shareable;
+import synchronizer.models.diff.Delta;
+
+import java.util.List;
 
 public class File implements Shareable {
     private int blockSize = 1024; // 1kb
     private String fileName;
 
-    private long lastModified; // unix time
+    private long lastModified; // modified by local user, unix time
     private long length;
+
+    // file's checksum
+    private String checkSum;
+
+    // file deltas
+    private List<Delta> deltas;
+
 
     // true whenever SyncVerticle checks that global and local map are equal
     private boolean syncCheck = false;
