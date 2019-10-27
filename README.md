@@ -185,7 +185,7 @@ Local discovery protocol
 # class B subnet, broadcast 172.18.255.255
 docker network create --subnet=172.18.0.0/16 mynet123
 ```
-2) Define peers IP addresses and ports in __peers.txt__ file
+2) Pre-Define peers IP addresses and ports
 ```bash
 172.18.0.10:2020
 172.18.0.15:2020
@@ -193,65 +193,62 @@ docker network create --subnet=172.18.0.0/16 mynet123
 172.18.0.20:2020
 ```
 
-3) run docker containers with "synchronizer" software
+3) Run docker containers with "synchronizer" software
 
 Client 1:
 ```bash
-docker run --net mynet123 --ip 172.18.0.10 synchronizer:latest  
+docker run --net mynet123 --ip 172.18.0.10 -it --rm synchronizer:latest  
 ```
 Client 2:
 ```bash
-docker run --net mynet123 --ip 172.18.0.15 -it synchronizer:latest  
+docker run --net mynet123 --ip 172.18.0.15 -it --rm synchronizer:latest  
 ```
 Client 3:
 ```bash
-docker run --net mynet123 --ip 172.18.0.17 -it synchronizer:latest  
+docker run --net mynet123 --ip 172.18.0.17 -it --rm synchronizer:latest  
 ```
 Client 4:
 ```bash
-docker run --net mynet123 --ip 172.18.0.20 -it synchronizer:latest  
+docker run --net mynet123 --ip 172.18.0.20 -it --rm synchronizer:latest  
 ```
         
-### NOTES!
+### MAKEFILE
+```bash
+# build maven project
+build:
+	@mvn package
 
-RenameAction is not a model. Refactor models package or move all non-models to another package.
+# clean java targets (jar and .class files)
+clean:
+	@mvn clean
 
-``` java
+# run java target with arguments
+run:
+	@java -jar target/synchronizer-jar-with-dependencies.jar -p /Users/gabrielmunits/opt/dir -d 172.18.0.10:2020 172.18.0.15:2020
 
+# build docker image
+build-docker:
+	@docker build . -t synchronizer:latest
 
-// RUN ALL STORAGE SERVICES!!!!!
-                // System.out.println("renaming file foo.txt");
-                // addSequentService(new RenameFileService("foo.txt","bar.txt"));
-                // addSequentService(new DeleteFileService(Paths.get("foo.txt")));
+# run all docker clients
+run-all: run-docker-client-1 run-docker-client-2 run-docker-client-3 run-docker-client-4
 
-                //                // fs watcher
-//                addStachosticService(new MonitorFileSystemActionsService(path));
-//
-//                // create 3 random files
-//                addSequentService(new ImitateFileCreations(path,3));
-//
-//
-//
-//                addSequentService(new Service(){
-//
-//                    @Override
-//                    public void run() {
-//                        System.out.println("running sequent task");
-//                    }
-//                });
-//
-//                addSequentService(new RenameFileService(Paths.get(path.toString(),"bar.txt").toString(),Paths.get(path.toString(),"newBar.txt").toString()));
-//
-//                String[] filenames = {"hello.txt", "gabriel.txt", "ilya.txt"};
-//                addSequentService(new ImitateFileCreations(path,filenames));
-//
-//                addSequentService(new RenameFileService(Paths.get(path.toString(),"hello.txt"),"newHello.txt"));
-//
-//                addSequentService(new RenameFileService(Paths.get(path.toString(),"gabriel.txt"),"newGabriel.txt"));
-//
-//                addSequentService(new RenameFileService(Paths.get(path.toString(),"ilya.txt"),"newIlya.txt"));
+# run docker client 1
+run-docker-client-1:
+	@docker run --net mynet123 --ip 172.18.0.10 -it --rm synchronizer:latest
+
+run-docker-client-2:
+	@docker run --net mynet123 --ip 172.18.0.15 -it --rm synchronizer:latest
+
+run-docker-client-3:
+	@docker run --net mynet123 --ip 172.18.0.17 -it --rm synchronizer:latest
+
+run-docker-client-4:
+	@docker run --net mynet123 --ip 172.18.0.20 -it --rm synchronizer:latest
 
 
-
+# kill all docker clients
+kill:
+	docker stop $(docker ps -q --filter ancestor=<synchronizer:latest> )
 
 ```
