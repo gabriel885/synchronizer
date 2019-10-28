@@ -8,6 +8,8 @@ public class DeleteAction extends Action {
     private File fileToDelete;
 
     public DeleteAction(Future<Void> deleteFuture, File fileToDelete) {
+        super(ActionType.DELETE);
+
         this.fileToDelete = fileToDelete;
         if (!this.fileToDelete.exists()){
             // TODO: make it compatible with FUTURE

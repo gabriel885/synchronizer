@@ -15,8 +15,8 @@ between multiple computers.
     *
     *
  * SharedData 
-    * local.path.structure
-    * global.path.structure
+    * local.path
+    * global.path
  * Events
     * localChangeDetected
     * remoteChangeDetected
@@ -80,7 +80,13 @@ Local discovery protocol
 ## verticles vs Threads
 ## Task vs Service
 
+## Action vs Message
+Action represent modification type like rename,create or delete action.
+Message on the other side contains file raw data (deltas).
+Ack/Nack are action type representing acknowledgement of a message - validated acceptance 
+of file data.
 
+## Round Robin Algorithm
 
 ### Implementation Guide:
 
@@ -212,7 +218,7 @@ Client 4:
 docker run --net mynet123 --ip 172.18.0.20 -it --rm synchronizer:latest  
 ```
         
-### MAKEFILE
+### Makefile
 ```bash
 # build maven project
 build:

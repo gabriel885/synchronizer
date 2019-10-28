@@ -27,8 +27,8 @@ public class CliParser {
     // path option
     Option pathCliOption = new Option("p","path", true, "path to synchronize with peers. example: /usd/opt/dir");
 
-    // devices option
-    Option devicesCliOption = new Option("d","devices", true,"devices with port to connect the p2p network. examples: 10.0.0.1:4321, 10.0.0.2:2019 10.0.0.0.5:1234");
+    // devices option (peers to connect the p2p network)
+    Option devicesCliOption = new Option("d","devices", true,"devices with port to connect the p2p network. examples: 10.0.0.1:4321, 10.0.0.2:2020 10.0.0.0.5:2020. NOTE: port is set to default to 2020");
 
 
     //String [] devices = cmd.getOptionValues("devices");

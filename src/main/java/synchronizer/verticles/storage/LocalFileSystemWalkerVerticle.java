@@ -36,7 +36,7 @@ public class LocalFileSystemWalkerVerticle extends AbstractVerticle {
         files = fs.readDirBlocking(this.path.toString());
 
         // Note: File implements io.vertx.core.shareddata.Shareable
-        LocalMap<String, synchronizer.models.File> pathMap =  sharedData.getLocalMap("local.path.structure");
+        LocalMap<String, synchronizer.models.File> pathMap =  sharedData.getLocalMap("local.path");
         pathMap.clear();
 
         for (String file: files){

@@ -9,6 +9,9 @@ public class ModifyAction extends Action {
     private File modifiedFile;
 
     public ModifyAction(Future<Void> modifyFuture, File modifiedFile){
+        super(ActionType.MODIFY);
+
+
         this.modifiedFile = modifiedFile;
         //modifyFuture.complete();
     }

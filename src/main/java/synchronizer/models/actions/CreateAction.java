@@ -7,7 +7,10 @@ import java.io.File;
 public class CreateAction extends Action {
     private java.io.File fileToCreate;
 
+
     public CreateAction(Future<Void> createFuture, File fileToCreate) {
+        super(ActionType.CREATE);
+
         this.fileToCreate = fileToCreate;
         if (!this.fileToCreate.exists()){
             //TODO: fix this

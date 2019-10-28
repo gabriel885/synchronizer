@@ -14,9 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 // responsible for comparing between global path structure and local path structure
-// to detect conflicts, adopt global path and request missing files.
+// to detect conflicts, adopt global path - request missing files and make local changes.
 // This allows to compensate on missed actions, failed downloads/uploads etc.!
-// Deploy on period when no files need to be synced
+// deploy interval is 2 seconds!
 // Use high priority event bus address
 public class SyncVerticle extends AbstractVerticle {
 

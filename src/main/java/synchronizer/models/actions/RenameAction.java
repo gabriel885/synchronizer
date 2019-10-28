@@ -10,6 +10,8 @@ public class RenameAction extends Action {
     private File oldFile, newFile;
 
     public RenameAction(Future<Void> renameFuture,  File oldFile, File newFile) throws PathNotFound{
+        super(ActionType.RENAME);
+
         this.oldFile = oldFile;
         this.newFile = newFile;
 
