@@ -1,20 +1,15 @@
 package synchronizer.verticles.p2p;
 
 import io.vertx.core.*;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.*;
-import io.vertx.core.streams.ReadStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import synchronizer.models.EventBusAddress;
-import synchronizer.models.File;
-import synchronizer.models.actions.Action;
+import synchronizer.exceptions.ApplicationFailure;
+import synchronizer.models.Peer;
+import synchronizer.verticles.p2p.handlers.ActionHandler;
+import synchronizer.verticles.p2p.handlers.client.ClientHandlers;
+import synchronizer.verticles.p2p.handlers.server.ServerHandlers;
 
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.URI;
-import java.net.UnknownHostException;
-import java.nio.file.Path;
 import java.util.*;
 
 // binds NetServer and NetClient together as a NetPeer to listen for incoming socket connections (server)
@@ -30,16 +25,11 @@ public class NetPeer extends AbstractPeer {
     // peer's port (default 2020)
     private int peerPort;
 
-    // all created net peers
-    private static List<NetPeer> netPeers = new ArrayList<>();
+    // peers to connect to
+    private static Set<Peer> peers = new HashSet<>();
 
-    // validate peer name is unique
-    private static Set<String> peerNames = new HashSet<>();
-
-    // peers that connect to all other peers
-    // as soon as 2 peers are listening and connecting to each other they are
-    // added to set
-    private static Set<String> allConnectedPeers = new HashSet<>();
+    // peers that are already connected (by host)
+    private static Set<String> connectedPeers = new HashSet<>();
 
     // tcp server
     private NetServer server;
@@ -47,53 +37,32 @@ public class NetPeer extends AbstractPeer {
     // tcp client
     private NetClient client;
 
-
-    // default client-server options
-    public NetPeer(String host, int port) throws Exception {
-        this(host, port, new NetClientOptions(), new NetServerOptions());
-    }
-
-    public NetPeer(String host, int port, NetClientOptions clientOptions) throws Exception {
-        this(host, port, clientOptions, new NetServerOptions());
-    }
-
-    public NetPeer(String host, int port, NetServerOptions serverOptions) throws Exception {
-        this(host, port, new NetClientOptions(), serverOptions);
-    }
-
-
     /**
      *
      * @param host - name of the peer
      * @param clientOptions - vertx net client options
      * @param serverOptions - vertx net server options
      */
-    public NetPeer(String host, int port,  NetClientOptions clientOptions, NetServerOptions serverOptions) throws Exception{
+    public NetPeer(String host, int port, Set<Peer> peers,  NetClientOptions clientOptions, NetServerOptions serverOptions) throws Exception{
 
-        // add this instance to all netPeers
-        netPeers.add(this);
-
-        // assert if peer name exists
-        if (peerNames.contains(host)){
-            logger.error(String.format("Peer name %s already exists", host));
-            // don't continue
-            return;
+        // validate peers in network
+        for(Peer peer: peers){
+            if (!validateHostAndPort(String.format("%s:%d", peer.getHost(), peer.getPort()))){
+                throw new ApplicationFailure(String.format("Failed to validate peer %s:%d", host ,port));
+            }
         }
 
-        // TODO: Validate host and port!
-        // assert peer name is not empty
-        if (!host.isEmpty()){
-            this.peerName = host;
+        // validate current net peer
+        if(!validateHostAndPort(String.format("%s:%d", host, port))){
+            throw new ApplicationFailure(String.format("Failed to validate peer %s:%d", host ,port));
         }
 
+        // assign other peers
+        this.peers = peers;
+
+        // assign current peer credentials
+        this.peerName = host;
         this.peerPort = port;
-
-        // TODO: THROW a warning exception if host/port are invalid!!
-        // for debugging purposes
-        new InetSocketAddress(host,port);
-
-        // add peer name (host) to all peers
-        peerNames.add(host);
 
         // set server host and peer (to allow incoming connections)
         serverOptions.setHost(host).setPort(port);
@@ -101,24 +70,24 @@ public class NetPeer extends AbstractPeer {
         Vertx vertx = Vertx.vertx();
         this.client = vertx.createNetClient(clientOptions);
         this.server = vertx.createNetServer(serverOptions);
-        logger.info(String.format("Added peer %s:%d to p2p network",host,port));
     }
+
 
 
 
     /**
      * Listen on port 2020 for incoming connections
+     * @param listenHandlers - server listening handlers
      * @return
      */
-    // TODO: add List<Handler<NetSocket>> listenHandlers as function argument
-    // TODO: listen only on peers in network!!!!!
-    // listen(portOfSomePeerInNetwork, peersHost)
-
-    protected final Future<Void> listen(List<Handler<NetSocket>> listenHandlers){
+    protected final Future<Void> listen(ServerHandlers listenHandlers){
         Future<Void> future = Future.future();
 
         // connect server handlers
-        for (Handler<NetSocket> handler: listenHandlers){
+        Iterator<ActionHandler> itr = listenHandlers.getHandlersIterator();
+        while(itr.hasNext()){
+            ActionHandler handler = itr.next();
+            logger.info(String.format("%s connected server-handler: %s", toString(),handler.getClass().getSimpleName()));
             this.server.connectHandler(handler);
         }
 
@@ -140,33 +109,43 @@ public class NetPeer extends AbstractPeer {
 
 
     /**
-     * Connect to another peer
-     * @param otherPeer - peer to connect to
+     * Connect to all listening peers in the network
+     * @param connectHandlers - client listening handlers
      * @return
      */
-    // TODO: add List<Handler<AsyncResult<NetSocket>>> connectHandlers as function argument
-    protected final Future<Void> connect(NetPeer otherPeer){
+    protected final Future<Void> connect(ClientHandlers connectHandlers){
         Future <Void> future = Future.future();
-        String host = otherPeer.getPeerName();
-        int port = otherPeer.getPeerPort();
 
-        this.client.connect(port, host, res ->{
-            // initial connect
-            if (res.succeeded()){
-                // connect client handlers
-//                for (Handler<AsyncResult<NetSocket>> handler:
-//                     connectHandlers) {
-//                    this.client.connect(port,host,handler);
-//                }
-                logger.info("%s connected to %s:%d",this.toString(), host, port);
-                future.complete();
-            }
-            else{
-                logger.info("%s failed to connect to %s:%d",this.toString(), host, port);
+        logger.debug("assigning client handlers");
+        //TODO: connect only to non-connected peers
+        for (Peer peer: peers){
 
-                future.fail(res.cause());
+            // skip already connected peers
+            if (connectedPeers.contains(peer.getHost())){
+                continue;
             }
-        });
+            logger.debug("iterating client handlers");
+            // register all connect handlers to client
+            Iterator<ActionHandler> itr = connectHandlers.getHandlersIterator();
+            while(itr.hasNext()){
+                ActionHandler handler = itr.next();
+                this.client.connect(peer.getPort(), peer.getHost(), res->{
+                    if (res.succeeded()){
+                        logger.info(String.format("%s connected client-handler: %s to %s", this.getHost(), handler.getClass().getSimpleName(), peer.toString()));
+                        future.complete();
+                        connectedPeers.add(this.getHost());
+                    }
+                    else{
+                        logger.info(String.format("%s failed to connect client-handler: %s to %s", this.getHost() , handler.getClass().getSimpleName(),peer.toString()));
+                        // retry connect attempts according to NetClientOptions
+                        future.fail(res.cause());
+                    }
+                });
+            }
+
+
+        }
+
         return future;
     }
 
@@ -179,7 +158,7 @@ public class NetPeer extends AbstractPeer {
     public final Future<Void> join(){
         Future future = Future.future();
 
-
+        // connect and listen()
 //        // connect and listen to all peers in network
 //        for (NetPeer peerInNetwork: netPeers){
 //            // connect only peer that is not connected to all peers
@@ -271,19 +250,19 @@ public class NetPeer extends AbstractPeer {
     public static final void disconnect(String peerName){
 
         // remove from net Peers
-        Iterator<NetPeer> itr = netPeers.iterator();
-        while (itr.hasNext()){
-            NetPeer nextNetPeer = itr.next();
-
-            // close peer's connections
-            nextNetPeer.close();
-
-            if (nextNetPeer.getPeerName().equals(peerName)){
-                itr.remove();
-            }
-        }
-        // remove from all connected peers
-        allConnectedPeers.remove(peerName);
+//        Iterator<NetPeer> itr = netPeers.iterator();
+//        while (itr.hasNext()){
+//            NetPeer nextNetPeer = itr.next();
+//
+//            // close peer's connections
+//            nextNetPeer.close();
+//
+//            if (nextNetPeer.getPeerName().equals(peerName)){
+//                itr.remove();
+//            }
+//        }
+//        // remove from all connected peers
+//        allConnectedPeers.remove(peerName);
 
 //        if (peerExists(peerName)){
 //            remove(peerName);
@@ -298,19 +277,19 @@ public class NetPeer extends AbstractPeer {
     /**
      * @return peer's name
      */
-    public String getPeerName(){
+    public String getHost(){
         return this.peerName;
     }
 
     /**
      * @return return peer's port
      */
-    public int getPeerPort(){
+    public int getPort(){
         return this.peerPort;
     }
 
     /**
-     * peer ass tring
+     * peer as string
      * @return
      */
     @Override
@@ -318,14 +297,6 @@ public class NetPeer extends AbstractPeer {
         return String.format("%s:%d",this.peerName, this.peerPort);
     }
 
-    /**
-     * when peer dies remove him from static peerNames collection
-     */
-    @Override
-    public void finalize(){
-        // remove peer from peerNames
-        this.peerNames.remove(this.peerName);
-    }
 
 
 

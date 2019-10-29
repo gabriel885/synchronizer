@@ -7,6 +7,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * represent AbstractPeer in a P2P network
@@ -96,4 +98,25 @@ public abstract class AbstractPeer extends AbstractVerticle{
 //    public Collection<NetPeer> getAllRegisteredPeers(){
 //        return this.peers.values();
 //    }
+
+
+    public boolean validateHostAndPort(String string){
+
+        try {
+            // WORKAROUND: add any scheme to make the resulting URI valid.
+            URI uri = new URI("my://" + string); // may throw URISyntaxException
+            String host = uri.getHost();
+            int port = uri.getPort();
+
+            if (uri.getHost() == null || uri.getPort() == -1) {
+                throw new URISyntaxException(uri.toString(),
+                        "URI must have host and port parts");
+            }
+            return true;
+
+        } catch (URISyntaxException ex) {
+            // validation failed
+            return false;
+        }
+    }
 }

@@ -1,19 +1,22 @@
 package synchronizer.verticles.p2p;
 
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.NetServerOptions;
-import io.vertx.core.net.NetSocket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.models.File;
+import synchronizer.models.Peer;
 import synchronizer.models.actions.Action;
+import synchronizer.verticles.p2p.handlers.LogHandler;
+import synchronizer.verticles.p2p.handlers.client.ClientHandlers;
+import synchronizer.verticles.p2p.handlers.server.ServerHandlers;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -28,85 +31,80 @@ public class TCPPeer extends NetPeer implements Protocol {
     // logger
     private static final Logger logger = LogManager.getLogger(TCPPeer.class);
 
+    // server handlers (send actions to other peers)
+    private ServerHandlers serverHandlers = new ServerHandlers(new LogHandler());
+
+    // client handlers (receive actions from other peers)
+    private ClientHandlers clientHandlers = new ClientHandlers(new LogHandler());
+
     // all instantiated tcp peers in application
     private static List<TCPPeer> tcpPeers = new ArrayList<>();
 
+
     /**
-     * TCPPeer connected to p2p network
-     * @param hostname - peer's hostname
-     * @param port - peer's port
+     * initialize tcp peer
+     * @param hostname - peer's host
+     * @param port - peer's port it's listening for connections on
+     * @param peers - other peers to connect to
      * @throws Exception
      */
-    public TCPPeer(String hostname, int port) throws Exception{
+    public TCPPeer(String hostname, int port, Set<Peer> peers) throws Exception{
         // default net server and client options
-        super(hostname,port);
+        this(hostname, port, peers,  new NetClientOptions(), new NetServerOptions());
     }
 
     /**
-     *
+     * initialize tcp peer with net client options
      * @param hostname
      * @param port
-     * @param clientOptions - net client options
+     * @param peers
+     * @param clientOptions
      * @throws Exception
      */
-    public TCPPeer(String hostname, int port, NetClientOptions clientOptions) throws Exception {
-        super(hostname,port,clientOptions);
+    public TCPPeer(String hostname, int port, Set<Peer> peers, NetClientOptions clientOptions) throws Exception {
+        this(hostname, port, peers, clientOptions,new NetServerOptions());
     }
 
     /**
-     *
+     * initialize tcp peer with net server options
      * @param hostname
      * @param port
-     * @param serverOptions - net server options
+     * @param peers
+     * @param serverOptions
      * @throws Exception
      */
-    public TCPPeer(String hostname, int port, NetServerOptions serverOptions) throws Exception {
-        super(hostname,port,serverOptions);
+    public TCPPeer(String hostname, int port, Set<Peer> peers, NetServerOptions serverOptions) throws Exception {
+        this(hostname, port, peers, new NetClientOptions(), serverOptions);
     }
 
-    public TCPPeer(String hostname, int port, NetClientOptions clientOptions, NetServerOptions serverOptions) throws Exception{
-        super(hostname, port, clientOptions, serverOptions);
+    /**
+     * initialize tcp peer with net client and server options
+     * @param hostname
+     * @param port
+     * @param peers
+     * @param clientOptions
+     * @param serverOptions
+     * @throws Exception
+     */
+    public TCPPeer(String hostname, int port, Set<Peer> peers, NetClientOptions clientOptions, NetServerOptions serverOptions) throws Exception{
+        super(hostname, port, peers, clientOptions, serverOptions);
     }
 
     @Override
     public void start(){
-        // connect to all peers
-        //joinAll();
 
-        // connect all server listening handlers
-        List<Handler<NetSocket>> serverListenHandlers = new ArrayList<>();
-        serverListenHandlers.add(new Handler<NetSocket>() {
-            @Override
-            public void handle(NetSocket event) {
-                event.handler(buffer->{
+        listen(serverHandlers);
 
-                    logger.info(String.format("%s received buffer %s", toString(),buffer.toString()));
-                });
+        connect(clientHandlers);
 
-            }
-        });
-
-        listen(serverListenHandlers);
-
-        //connect(new NetPeer());
-
-
-        // after all peers are listening on port 2020
-        // iterate all peers and connect to other peers synchronically!!
-
-
-        // NetClientOptions: unavailable peers will be tried again to connect after 7 seconds. retry will happen 5 times
-
-
-        // connect handlers to peers
-        // peers listen
-        logger.info(String.format("Peer %s is deployed", this.getPeerName()));
+        logger.info(String.format("Peer %s is deployed", this.getHost()));
     }
+
 
     @Override
     public void stop(){
         // automatically closes all servers and clients that where created on start
-        logger.info(String.format("Peer %s is undeployed", this.getPeerName()));
+        logger.info(String.format("Peer %s is undeployed", this.getHost()));
 
     }
 
@@ -130,7 +128,7 @@ public class TCPPeer extends NetPeer implements Protocol {
 
     @Override
     public void sendFile(NetPeer peer) {
-        
+
     }
 
     @Override

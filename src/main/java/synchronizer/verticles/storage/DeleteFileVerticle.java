@@ -2,12 +2,18 @@ package synchronizer.verticles.storage;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import synchronizer.exceptions.VerticleException;
 
 /**
  * Verticles responsible for removing a file
  */
 public class DeleteFileVerticle extends AbstractVerticle {
+
+    // logger
+    private static final Logger logger = LogManager.getLogger(DeleteFileVerticle.class);
+
 
     private String fileToDelete;
 
@@ -21,7 +27,7 @@ public class DeleteFileVerticle extends AbstractVerticle {
         vertx.fileSystem().exists(fileToDelete, result -> {
             if (result.succeeded() && result.result()) {
                 vertx.fileSystem().delete(fileToDelete, r -> {
-                    System.out.println(String.format("File %s deleted", fileToDelete));
+                    logger.info(String.format("File %s deleted", fileToDelete));
                     startFuture.complete();
                 });
             } else {

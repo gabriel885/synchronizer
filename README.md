@@ -7,6 +7,7 @@ between multiple computers.
 
 ## Prerequesites
  * JDK 1.8 
+ * Maven
  * Docker (optional)
     
 ### Principles
@@ -42,27 +43,20 @@ between multiple computers.
     
     
 ### Design/Functionality
- * Multi Threaded Server
+ * Multi Threaded Server Application
     * Storage Application
         * local directory listener
-        * chunk files (for upload)
         * rename files
         * modify file content
         * delete files
-        * compress chunks
-        * delta comparisons
+        * publish/receive event bus events
     * P2P application 
         * upload files
         * download files
         * listen to actions
         * transmit actions
+        * publish/receive event bust events
 
-## Adding computers to the network
-* each computer has a unique ID. To add computers someone from 
-the network will need to add the unique ID and establish a connection.
-
-## Discovery Protocol
-Local discovery protocol
 
 ### Dependencies
 * [vertex](https://vertx.io)
@@ -70,15 +64,18 @@ Local discovery protocol
 * [apache commons-io]()
 * [apache-commons-cli]()
 
-### How to install
-1) mvn install
-2) run .jar
+### How to compile and run project
+1) Compile
+```bash
+mvn package
+```
+2) Run
+```bash
+java -jar target/synchronizer-jar-with-dependencies.jar -p /Users/gabrielmunits/opt/dir -d 172.18.0.10:2020 172.18.0.15:2020
+```
 ### Imitating isolated hosts docker containers (each pod runs a container of "synchronizer")
 ![pods](docs/pods.png)
 
-## When to use verticles and when to use threads?
-## verticles vs Threads
-## Task vs Service
 
 ## Action vs Message
 Action represent modification type like rename,create or delete action.
@@ -172,14 +169,44 @@ of file data.
 * Add TCP peer to the network
 ```java
     // add peer on host 10.0.0.5 and listening port 2017
-    vertx.deployVerticle(new TCPPeer("10.0.0.5",2017));
+    TCPPeer tcpPeer = new TCPPeer(myHost,port,new NetClientOptions().setReconnectAttempts(5).setReconnectInterval(5000));
+    // deploy tcp peer verticle
+    // on deploy peer will connect to other peers 
+    vertx.deployVerticle(tcpPeer);
 
 ```
+
+* Create server handlers for TCP peer (listening for incoming actions from other peers)
+```java
+
+// server handlers
+// default handler is log hander (because server must have at least one handler registered)
+ServerHandlers serverHandlers = new ServerHandlers(new LogHandler());
+
+serverHandlers.add(new ActionHandler() {
+            @Override
+            public void handle(NetSocket event) {
+
+            }
+});
+
+* Create client handlers for TCP peer (sending outcoming actions to other peers)
+```java
+
+
+```
+
+
+// listen with server configurations and register server handlers
+listen(serverHandlers);
+```
+
 * Consume EventBust action messages
 ```java
 
 
 ```
+
 
 
         

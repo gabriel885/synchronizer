@@ -33,8 +33,7 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     // p2p application's peers
     private Set<Peer> peers = new HashSet<>();
 
-    // applications tcp peers
-    //private List<TCPPeer> tcpPeers = new ArrayList<>();
+    // tcp peer of current host
     private TCPPeer tcpPeer;
 
 
@@ -51,22 +50,20 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
             peers.add(new Peer(host,port));
         }
 
+        // exlude myself from list of peers
+        Iterator<Peer> itr = peers.iterator();
+        // log peers
+        while (itr.hasNext()){
+            Peer other = itr.next();
+            if (other.compareTo(new Peer(myHost,port))==1){
+                itr.remove();
+            }
+        }
 
-        // exclude myself from list of peers
-       // peers.remove(new Peer(this.myHost,this.port).toString());
-
-//        // instantiate tcp peers
-//        for (String device: devices){
-//            String host = device.split(":")[0];
-//            int port = Integer.parseInt(device.split(":")[1]);
-//            // exlude this peer
-//            // add to list of TCP peers
-//            //this.tcpPeers.add(new TCPPeer(host,port,new NetClientOptions().setReconnectAttempts(5).setReconnectInterval(5000)));
-//
-//        }
         logger.info(String.format("list of my peers %s",Arrays.asList(peers)));
 
-        tcpPeer = new TCPPeer(myHost,port,new NetClientOptions().setReconnectAttempts(reconnectAttemps).setReconnectInterval(reconnectInterval));
+        // TODO: define default net server options
+        tcpPeer = new TCPPeer(myHost, port, peers, new NetClientOptions().setReconnectAttempts(reconnectAttemps).setReconnectInterval(reconnectInterval));
 
 
     }
@@ -78,6 +75,8 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     @Override
     public void start() throws Exception {
 
+
+        // TODO: set deployment options
         // deploy tcp peer
         vertx.deployVerticle(tcpPeer);
 
@@ -86,11 +85,22 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     }
 
 
+    /**
+     * kill p2p application gracefully
+     */
     @Override
     public void kill() {
         logger.warn("P2PApplication is shutting down...");
         vertx.close();
     }
 
+    /**
+     * print host and port of machine the application is running on
+     * @return
+     */
+    @Override
+    public String toString(){
+        return String.format("%s:%d",this.myHost, this.port);
+    }
 
 }

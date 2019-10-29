@@ -80,13 +80,12 @@ public class ActionSenderVerticle extends AbstractVerticle {
                @Override
                public void onFileCreate(File file) {
                    // code for processing creation event
-                   logger.info(String.format("File %s created", file.toString()));
                    //ActionSenderVerticle.this.producer.write(new CreateAction(null, file));
 
                    // create action object and send to the event bus
                    actionObject.put("CREATE",file.getPath());
                    ActionSenderVerticle.this.producer.write(actionObject);
-                   logger.debug(actionObject.toString());
+                   logger.info(actionObject.toString());
                    actionObject.clear();
 
                    // update local.path.structure SharedData
@@ -97,11 +96,10 @@ public class ActionSenderVerticle extends AbstractVerticle {
                @Override
                public void onFileChange(File file) {
                    // code for processing change event
-                   logger.info(String.format("File %s changed", file.toString()));
                    // ActionSenderVerticle.this.producer.write(new ModifyAction(null, file));
                    actionObject.put("MODIFY",file.getPath());
                    ActionSenderVerticle.this.producer.write(actionObject);
-                   logger.debug(actionObject.toString());
+                   logger.info(actionObject.toString());
                    actionObject.clear();
 
 
@@ -116,11 +114,10 @@ public class ActionSenderVerticle extends AbstractVerticle {
                public void onFileDelete(File file) {
 
                    // code for processing deletion event
-                   logger.info(String.format("File %s deleted", file.toString()));
                    //ActionSenderVerticle.this.producer.write(new DeleteAction(null, file));
                    actionObject.put("DELETE",file.getPath());
                    ActionSenderVerticle.this.producer.write(actionObject);
-                   logger.debug(actionObject.toString());
+                   logger.info(actionObject.toString());
                    actionObject.clear();
 
                    // update local.path.structure SharedData
@@ -130,11 +127,10 @@ public class ActionSenderVerticle extends AbstractVerticle {
 
                @Override
                public void onDirectoryCreate(File dir) {
-                   logger.info(String.format("Directory %s created", dir.toString()));
                    //ActionSenderVerticle.this.producer.write(new CreateAction(null, dir));
                    actionObject.put("CREATE",dir.getPath());
                    ActionSenderVerticle.this.producer.write(actionObject);
-                   logger.debug(actionObject.toString());
+                   logger.info(actionObject.toString());
                    actionObject.clear();
 
 
@@ -152,12 +148,10 @@ public class ActionSenderVerticle extends AbstractVerticle {
 
                @Override
                public void onDirectoryDelete(File dir) {
-                   logger.info(String.format("Directory %s deleted", dir.toString()));
                    //ActionSenderVerticle.this.producer.write(new DeleteAction(null, dir));
                    actionObject.put("DELETE",dir.getPath());
                    logger.info(actionObject.toString());
                    ActionSenderVerticle.this.producer.write(actionObject);
-                   logger.debug(actionObject.toString());
                    actionObject.clear();
                }
 
