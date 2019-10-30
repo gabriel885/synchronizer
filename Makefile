@@ -15,20 +15,14 @@ build-docker:
 	@docker build . -t synchronizer:latest
 
 # run all docker clients
-run-all: run-docker-client-1 run-docker-client-2 run-docker-client-3 run-docker-client-4
+run-all: run-docker-client-1 run-docker-client-2
 
 # run docker client 1
 run-docker-client-1:
-	@docker run --net mynet123 --ip 172.18.0.10 -it --rm synchronizer:latest
+	@docker run --rm --net mynet123 --ip 172.18.0.10 -it  synchronizer:latest
 
 run-docker-client-2:
-	@docker run --net mynet123 --ip 172.18.0.15 -it --rm synchronizer:latest
-
-run-docker-client-3:
-	@docker run --net mynet123 --ip 172.18.0.17 -it --rm synchronizer:latest
-
-run-docker-client-4:
-	@docker run --net mynet123 --ip 172.18.0.20 -it --rm synchronizer:latest
+	@docker run --rm --net mynet123 --ip 172.18.0.15 -it synchronizer:latest
 
 
 # kill all docker clients

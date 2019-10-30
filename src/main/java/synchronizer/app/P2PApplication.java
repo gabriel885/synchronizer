@@ -20,7 +20,7 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     protected InetAddress inetAddress;
 
     // reconnect attempts to each non-responding peer
-    private static final int reconnectAttemps = 5;
+    private static final int reconnectAttemps = 10;
 
     // reconnect attempt interval
     private static final int reconnectInterval = 5000; // 5 seconds
@@ -59,8 +59,6 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
                 itr.remove();
             }
         }
-
-        logger.info(String.format("list of my peers %s",Arrays.asList(peers)));
 
         // TODO: define default net server options
         tcpPeer = new TCPPeer(myHost, port, peers, new NetClientOptions().setReconnectAttempts(reconnectAttemps).setReconnectInterval(reconnectInterval));

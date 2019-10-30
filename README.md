@@ -73,6 +73,18 @@ mvn package
 ```bash
 java -jar target/synchronizer-jar-with-dependencies.jar -p /Users/gabrielmunits/opt/dir -d 172.18.0.10:2020 172.18.0.15:2020
 ```
+Or (using makefile) running 4 docker containers
+```bash
+make build-docker
+make -j run-all
+```
+Execute bash inside containers and manipulate monitorable path!
+```bash
+docker exec container-name-1 /bin/bash
+docker exec container-name-2 /bin/bash
+
+```
+
 ### Imitating isolated hosts docker containers (each pod runs a container of "synchronizer")
 ![pods](docs/pods.png)
 

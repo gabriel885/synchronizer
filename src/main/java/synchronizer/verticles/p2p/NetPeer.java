@@ -7,8 +7,8 @@ import org.apache.logging.log4j.Logger;
 import synchronizer.exceptions.ApplicationFailure;
 import synchronizer.models.Peer;
 import synchronizer.verticles.p2p.handlers.ActionHandler;
-import synchronizer.verticles.p2p.handlers.client.ClientHandlers;
-import synchronizer.verticles.p2p.handlers.server.ServerHandlers;
+import synchronizer.verticles.p2p.handlers.ClientHandlers;
+import synchronizer.verticles.p2p.handlers.ServerHandlers;
 
 import java.util.*;
 
@@ -26,10 +26,12 @@ public class NetPeer extends AbstractPeer {
     private int peerPort;
 
     // peers to connect to
-    private static Set<Peer> peers = new HashSet<>();
+    // K: peer's host
+    // V: peer model
+    protected static HashMap<String,Peer> peers = new HashMap<>();
 
     // peers that are already connected (by host)
-    private static Set<String> connectedPeers = new HashSet<>();
+    protected static Set<String> connectedPeers = new HashSet<>();
 
     // tcp server
     private NetServer server;
@@ -58,7 +60,9 @@ public class NetPeer extends AbstractPeer {
         }
 
         // assign other peers
-        this.peers = peers;
+        for (Peer peer: peers){
+            this.peers.put(peer.getHost(),peer);
+        }
 
         // assign current peer credentials
         this.peerName = host;
@@ -113,18 +117,18 @@ public class NetPeer extends AbstractPeer {
      * @param connectHandlers - client listening handlers
      * @return
      */
-    protected final Future<Void> connect(ClientHandlers connectHandlers){
-        Future <Void> future = Future.future();
+    protected final void connect(ClientHandlers connectHandlers){
+        List<Future> futures = new ArrayList<>();
 
-        logger.debug("assigning client handlers");
-        //TODO: connect only to non-connected peers
-        for (Peer peer: peers){
+        // connecting to all non-connected peers in the network
+        for (Peer peer: peers.values()){
+            Future future = Future.future();
+            futures.add(future);
 
             // skip already connected peers
             if (connectedPeers.contains(peer.getHost())){
                 continue;
             }
-            logger.debug("iterating client handlers");
             // register all connect handlers to client
             Iterator<ActionHandler> itr = connectHandlers.getHandlersIterator();
             while(itr.hasNext()){
@@ -132,7 +136,7 @@ public class NetPeer extends AbstractPeer {
                 this.client.connect(peer.getPort(), peer.getHost(), res->{
                     if (res.succeeded()){
                         logger.info(String.format("%s connected client-handler: %s to %s", this.getHost(), handler.getClass().getSimpleName(), peer.toString()));
-                        future.complete();
+                        // update to connectedPeers data structure
                         connectedPeers.add(this.getHost());
                     }
                     else{
@@ -142,82 +146,14 @@ public class NetPeer extends AbstractPeer {
                     }
                 });
             }
-
-
         }
+        CompositeFuture.all(futures).setHandler(res->{
+            logger.warn(String.format("Failed to connect to all peers %s", this.peers.keySet()));
+        });
 
-        return future;
     }
 
-    /**
-     * Join to peers network
-     * Connecting and listening to that peer.
-     * @param peerToJoin
-     * @return
-     */
-    public final Future<Void> join(){
-        Future future = Future.future();
 
-        // connect and listen()
-//        // connect and listen to all peers in network
-//        for (NetPeer peerInNetwork: netPeers){
-//            // connect only peer that is not connected to all peers
-//            if (!allConnectedPeers.contains(peerInNetwork.getPeerName())){
-//                // don't connect myself!
-//                if (!peerInNetwork.getPeerName().equals(peerToJoin.peerName)){
-//                    logger.info(String.format("joining peer %s to peer %s", peerInNetwork ,peerToJoin.toString()));
-//                    // listen
-//                    //listen();
-//                    // connect this peer with other peer
-//                    //connect(peerInNetwork);
-//
-//                }
-//            }
-//
-//        }
-//        // add to connectedPeers
-//        allConnectedPeers.add(peerToJoin.peerName);
-//
-//
-//        future.complete();
-//        logger.info("succeded to connect to %s", peerToJoin.getPeerName());
-        // establish connection with that peer
-
-        return future;
-    }
-
-    // TODO: delete this!!
-//    /**
-//     * join all existing peers to network
-//     * @return future indicating all peers joined successfully
-//     */
-//    public final Future<Void> joinAll(){
-//        // all peers futures
-//        List<Future> futures = new ArrayList<>();
-//
-//        // join each peer to the network
-//        // each node connects to all other nodes
-//        for (NetPeer peer: netPeers){
-//            futures.add(this.join(peer));
-//        }
-//
-//        // all futures result
-//        Future future = Future.future();
-//
-//        // ensure all futures succeded
-//        CompositeFuture.all(futures).setHandler(done -> {
-//            if (done.succeeded()) {
-//                future.complete();
-//                logger.info("Connected to all peers");
-//            } else {
-//                logger.info("failed to connect to all peers");
-//                future.fail(done.cause());
-//            }
-//        });
-//
-//        // return all future
-//        return future;
-//    }
 
     /**
      * closes peer's client-server socket connections

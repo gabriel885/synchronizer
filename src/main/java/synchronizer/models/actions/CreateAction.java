@@ -1,6 +1,7 @@
 package synchronizer.models.actions;
 
 import io.vertx.core.Future;
+import io.vertx.core.buffer.Buffer;
 
 import java.io.File;
 

@@ -14,19 +14,20 @@ public interface Protocol {
 
     /**
      * broadcast an action to all peers
-     * @param action
+     * @param action - action to broadcast
      * @return Future indicating if all peers connected successfully
      */
-    Future<Action> broadcast(JsonObject action);
+    Future<Action> broadcast(Action action);
 
     // send action to peer
 
     /**
      * send an action to a particular peer
+     * @param action - action to send to peer
      * @param peer
      * @return ACK/NACK message from peer
      */
-    Future<Action> broadcastPeer(NetPeer peer);
+    Future<Action> broadcastPeer(Action action, NetPeer peer);
 
     /**
      * send file to specific peer

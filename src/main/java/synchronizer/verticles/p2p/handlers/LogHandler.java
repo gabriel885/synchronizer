@@ -5,17 +5,24 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * handlers logs events from socket
+ * logs handler events from socket
  */
 public class LogHandler implements ActionHandler {
 
     // logger
     private Logger logger = LogManager.getLogger(LogHandler.class);
 
+    // host the handler is connected to
+    private String identifier;
+
+    public LogHandler(String identifier){
+        this.identifier = identifier;
+    }
+
     @Override
     public void handle(NetSocket event) {
         event.handler(buffer->{
-           logger.info(buffer.toString());
+           logger.info(String.format("%s %s",identifier,buffer.toString()));
         });
     }
 }

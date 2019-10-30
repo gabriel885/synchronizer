@@ -1,4 +1,4 @@
-package synchronizer.verticles.p2p.handlers.server;
+package synchronizer.verticles.p2p.handlers;
 
 import synchronizer.verticles.p2p.handlers.ActionHandler;
 

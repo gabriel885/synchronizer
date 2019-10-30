@@ -1,7 +1,7 @@
 package synchronizer.verticles.p2p;
 
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.NetServerOptions;
 import org.apache.logging.log4j.LogManager;
@@ -10,8 +10,8 @@ import synchronizer.models.File;
 import synchronizer.models.Peer;
 import synchronizer.models.actions.Action;
 import synchronizer.verticles.p2p.handlers.LogHandler;
-import synchronizer.verticles.p2p.handlers.client.ClientHandlers;
-import synchronizer.verticles.p2p.handlers.server.ServerHandlers;
+import synchronizer.verticles.p2p.handlers.ClientHandlers;
+import synchronizer.verticles.p2p.handlers.ServerHandlers;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -26,16 +26,17 @@ import java.util.Set;
  * Message routing
  *
  */
-public class TCPPeer extends NetPeer implements Protocol {
+// implements Protocol
+public class TCPPeer extends NetPeer{
 
     // logger
     private static final Logger logger = LogManager.getLogger(TCPPeer.class);
 
     // server handlers (send actions to other peers)
-    private ServerHandlers serverHandlers = new ServerHandlers(new LogHandler());
+    private ServerHandlers serverHandlers = new ServerHandlers(new LogHandler(this.getHost()));
 
     // client handlers (receive actions from other peers)
-    private ClientHandlers clientHandlers = new ClientHandlers(new LogHandler());
+    private ClientHandlers clientHandlers = new ClientHandlers(new LogHandler(this.getHost()));
 
     // all instantiated tcp peers in application
     private static List<TCPPeer> tcpPeers = new ArrayList<>();
@@ -88,24 +89,30 @@ public class TCPPeer extends NetPeer implements Protocol {
      */
     public TCPPeer(String hostname, int port, Set<Peer> peers, NetClientOptions clientOptions, NetServerOptions serverOptions) throws Exception{
         super(hostname, port, peers, clientOptions, serverOptions);
+
+        // add client-server handlers
     }
 
     @Override
     public void start(){
 
+        // connect to peers in network
         listen(serverHandlers);
-
         connect(clientHandlers);
 
-        logger.info(String.format("Peer %s is deployed", this.getHost()));
+        // deploy event bus listening verticles
+
+        // vertx.deployVerticle(); // incoming.actions
+        // vertx.deployVerticle(); // outcoming.actions
+
+        logger.info(String.format("%s is deployed", this.getHost()));
     }
 
 
     @Override
     public void stop(){
         // automatically closes all servers and clients that where created on start
-        logger.info(String.format("Peer %s is undeployed", this.getHost()));
-
+        logger.info(String.format("%s is undeployed", this.getHost()));
     }
 
     /**
@@ -113,26 +120,37 @@ public class TCPPeer extends NetPeer implements Protocol {
      * @param action
      * @return - ACK/NACK action object
      */
-    @Override
-    public Future<Action> broadcast(JsonObject action) {
-        // composite future to all peers
-        // CompositeFuture.all()
+
+    public Future<Action> broadcast(Action action) {
+        // futures of all peers
+        List<Future> peersFutures = new ArrayList<>();
+
+        //
+        for (String peerName: connectedPeers){
+            Peer peer = peers.get(peerName);
+
+        }
+
+       // CompositeFuture.all]
 
         return null;
     }
 
-    @Override
     public Future<Action> broadcastPeer(NetPeer peer) {
         return null;
     }
 
-    @Override
     public void sendFile(NetPeer peer) {
 
     }
 
-    @Override
+    /**
+     * request file from peers using round robin algorithm
+     * @param path
+     * @return
+     */
     public Future<File> requestFile(Path path) {
+
         return null;
     }
 
