@@ -87,42 +87,36 @@ Message on the other side contains file raw data (deltas).
 Ack/Nack are action type representing acknowledgement of a message - validated acceptance 
 of file data.
 
-# Actions scheme:
+# Actions schemes:
 
 - Modify:
-   ```json
+```json
     {
-      "type": {
-        "MODIFY": {
-          "path": "/opt/dir/modifiedFile.txt",
-          "checksum": "abcdef"
-        }
-      }
-    }
-    ```
+      "type": "MODIFY",
+      "checksum": "edfdcfd4e646fe736caa2825226bf33f",
+      "path": "/opt/dir/newFile.txt",
+      "timestamp": 1572730328
+    }  
+ ```
 - Create:
-    ```json
+```json
     {
-      "type": {
-        "CREATE": {
-          "path": "/opt/dir/createdFile.txt",
-        }
-      }
-    }
-    ```
+      "type": "CREATE",
+      "path": "/opt/dir/.newFile.txt.swp",
+      "checksum": "a063e188310b9cf711b0e251a349afc1",
+      "timestamp": 1572730322
+    }    
+```
 - Delete:
-    ```json
+```json
     {
-      "type": {
-        "DELETE": {
-          "path": "/opt/dir/deletedFile.txt",
-        }
-      }
+      "type": "DELETE",
+      "path": "/Users/gabrielmunits/opt/dir/.newFile.txt.swp",
+      "timestamp": 1572730328
     }
-    ```
+```
 ### Implementation Guide:
 
-## scatter-gather protocol
 ##### MultiThreadedApplication
    - Initialize an application:
       ``` java
@@ -171,35 +165,7 @@ of file data.
         vertx.deployVerticle(new LocalFileSystemWalkerVerticle(path));
     });
 ```
-* __Consume EventBus messages__
-```java
- // consume path map
- vertx.deployVerticle(new Verticle() {
-     @Override
-     public Vertx getVertx() {
-         return null;
-     }
 
-     @Override
-     public void init(Vertx vertx, Context context) {
-
-     }
-
-     @Override
-     public void start(Future<Void> startFuture) throws Exception {
-         EventBus eb = vertx.eventBus();
-         eb.consumer("files", message ->{
-             logger.info(message.body());
-         });
-     }
-
-     @Override
-     public void stop(Future<Void> stopFuture) throws Exception {
-     }
- });
-* __Pubblish EventBus messages__
-
-```
 ##### P2PApplication
 * Add TCP peer to the network
 ```java
@@ -234,43 +200,7 @@ of file data.
     });
 ``` 
 __Important__: after tcpPeer is deployed it is not allowed to add client-server handlers.
-
-        
-        
-#### Demo Time!
-
-1) Create docker network
-```bash
-# class B subnet, broadcast 172.18.255.255
-docker network create --subnet=172.18.0.0/16 mynet123
-```
-2) Pre-Define peers IP addresses and ports
-```bash
-172.18.0.10:2020
-172.18.0.15:2020
-172.18.0.17:2020
-172.18.0.20:2020
-```
-
-3) Run docker containers with "synchronizer" software
-
-Client 1:
-```bash
-docker run --net mynet123 --ip 172.18.0.10 -it --rm synchronizer:latest  
-```
-Client 2:
-```bash
-docker run --net mynet123 --ip 172.18.0.15 -it --rm synchronizer:latest  
-```
-Client 3:
-```bash
-docker run --net mynet123 --ip 172.18.0.17 -it --rm synchronizer:latest  
-```
-Client 4:
-```bash
-docker run --net mynet123 --ip 172.18.0.20 -it --rm synchronizer:latest  
-```
-        
+     
 ### Makefile
 ```bash
 # build maven project
@@ -305,4 +235,39 @@ run-docker-client-2:
 # kill all docker clients
 kill:
 	docker stop $(docker ps -q --filter ancestor=<synchronizer:latest> )
+```
+
+    
+#### Demo Time!
+
+1) Create docker network
+```bash
+# class B subnet, broadcast 172.18.255.255
+docker network create --subnet=172.18.0.0/16 mynet123
+```
+2) Pre-Define peers IP addresses and ports
+```bash
+172.18.0.10:2020
+172.18.0.15:2020
+172.18.0.17:2020
+172.18.0.20:2020
+```
+
+3) Run docker containers with "synchronizer" software
+
+Client 1:
+```bash
+docker run --net mynet123 --ip 172.18.0.10 -it --rm synchronizer:latest  
+```
+Client 2:
+```bash
+docker run --net mynet123 --ip 172.18.0.15 -it --rm synchronizer:latest  
+```
+Client 3:
+```bash
+docker run --net mynet123 --ip 172.18.0.17 -it --rm synchronizer:latest  
+```
+Client 4:
+```bash
+docker run --net mynet123 --ip 172.18.0.20 -it --rm synchronizer:latest  
 ```
