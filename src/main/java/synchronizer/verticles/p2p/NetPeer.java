@@ -6,10 +6,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.exceptions.ApplicationFailure;
 import synchronizer.models.Peer;
-import synchronizer.verticles.p2p.handlers.ActionHandler;
-import synchronizer.verticles.p2p.handlers.ClientHandlers;
-import synchronizer.verticles.p2p.handlers.ServerHandlers;
+import synchronizer.verticles.p2p.handlers.*;
 
+import java.nio.file.Path;
 import java.util.*;
 
 // binds NetServer and NetClient together as a NetPeer to listen for incoming socket connections (server)
@@ -34,10 +33,10 @@ public class NetPeer extends AbstractPeer {
     protected static Set<String> connectedPeers = new HashSet<>();
 
     // tcp server
-    private NetServer server;
+    protected final NetServer server;
 
     // tcp client
-    private NetClient client;
+    protected final NetClient client;
 
     /**
      *
@@ -77,21 +76,45 @@ public class NetPeer extends AbstractPeer {
     }
 
 
+    /**
+     * listen to all peers
+     * @return reference to net server
+     */
+    protected final NetServer listen(){
+        return this.server.listen(peerPort);
+    }
 
 
     /**
-     * Listen on port 2020 for incoming connections
+     * listen to all peers with specific handler
+     * @param handler
+     * @return
+     */
+    protected final NetServer listen(ActionHandler handler) {
+        return this.server.listen(handler);
+    }
+
+    /**
+     * connect to specific peer a handler
+     * @return
+     */
+    protected final NetClient connect(Peer peer, ActionHandler handler){
+        return this.client.connect(peer.getPort(), peer.getHost(), handler);
+    }
+
+    /**
+     * connect listen handlers and listen on port 2020 for incoming connections
      * @param listenHandlers - server listening handlers
      * @return
      */
-    protected final Future<Void> listen(ServerHandlers listenHandlers){
+    protected final Future<Void> listen(Handlers listenHandlers){
         Future<Void> future = Future.future();
 
         // connect server handlers
         Iterator<ActionHandler> itr = listenHandlers.getHandlersIterator();
         while(itr.hasNext()){
             ActionHandler handler = itr.next();
-            logger.info(String.format("%s connected server-handler: %s", toString(),handler.getClass().getSimpleName()));
+            // deploy handler
             this.server.connectHandler(handler);
         }
 
@@ -112,48 +135,53 @@ public class NetPeer extends AbstractPeer {
     }
 
 
+
     /**
-     * Connect to all listening peers in the network
+     * Connect all client handlers to all listening peers in the network
      * @param connectHandlers - client listening handlers
      * @return
      */
-    protected final void connect(ClientHandlers connectHandlers){
-        List<Future> futures = new ArrayList<>();
+    protected final void connect(Handlers connectHandlers){
 
         // connecting to all non-connected peers in the network
         for (Peer peer: peers.values()){
-            Future future = Future.future();
-            futures.add(future);
-
             // skip already connected peers
-            if (connectedPeers.contains(peer.getHost())){
-                continue;
-            }
+            // TODO: refactor connected peers - why do we need this?
+//            if (connectedPeers.contains(peer.getHost())){
+//                continue;
+//            }
             // register all connect handlers to client
             Iterator<ActionHandler> itr = connectHandlers.getHandlersIterator();
             while(itr.hasNext()){
                 ActionHandler handler = itr.next();
-                this.client.connect(peer.getPort(), peer.getHost(), res->{
-                    if (res.succeeded()){
-                        logger.info(String.format("%s connected client-handler: %s to %s", this.getHost(), handler.getClass().getSimpleName(), peer.toString()));
-                        // update to connectedPeers data structure
-                        connectedPeers.add(this.getHost());
-                    }
-                    else{
-                        logger.info(String.format("%s failed to connect client-handler: %s to %s", this.getHost() , handler.getClass().getSimpleName(),peer.toString()));
-                        // retry connect attempts according to NetClientOptions
-                        future.fail(res.cause());
-                    }
-                });
+                // connect handler
+                this.client.connect(peer.getPort(), peer.getHost(), handler);
             }
         }
-        CompositeFuture.all(futures).setHandler(res->{
-            logger.warn(String.format("Failed to connect to all peers %s", this.peers.keySet()));
-        });
-
     }
 
 
+    /**
+     * send file to all peers
+     * @param path
+     */
+    protected final void sendFile(Path path){
+        // TODO: how do we know file sent succedded?
+        for (String peer: connectedPeers){
+            Peer netPeer = peers.get(peer);
+            //connect(netPeer, new SendFileHandler(path));
+        }
+    }
+
+    /**
+     * send file to specific peer
+     * @param peer
+     * @param path
+     */
+    protected final void sendFileToPeer(Peer peer, Path path){
+        Peer netPeer = peers.get(peer.getHost());
+       // connect(netPeer,new SendFileHandler(path));
+    }
 
     /**
      * closes peer's client-server socket connections
@@ -208,6 +236,21 @@ public class NetPeer extends AbstractPeer {
 //            // close peer connections
 //            tempPeer.close();
 //        }
+    }
+
+    /**
+     * @return net server
+     */
+    public NetServer getServer(){
+        return server;
+    }
+
+    /**
+     *
+     * @return net client
+     */
+    public NetClient getClient(){
+        return client;
     }
 
     /**

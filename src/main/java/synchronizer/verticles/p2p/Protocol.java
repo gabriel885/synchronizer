@@ -19,15 +19,13 @@ public interface Protocol {
      */
     Future<Action> broadcast(Action action);
 
-    // send action to peer
-
     /**
      * send an action to a particular peer
      * @param action - action to send to peer
      * @param peer
      * @return ACK/NACK message from peer
      */
-    Future<Action> broadcastPeer(Action action, NetPeer peer);
+    Future<Action> unicastPeer(Action action, NetPeer peer);
 
     /**
      * send file to specific peer

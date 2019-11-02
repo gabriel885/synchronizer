@@ -16,8 +16,25 @@ public class EventBusAddress {
         this.address = address;
     }
 
+    /**
+     * get registered event bus addresses
+     * @return
+     */
     public Set<String> getRegisteredAddresses(){ return registeredAddresses; }
 
+    /**
+     *
+     * @param address
+     * @return true if address is registered as event bus address or not
+     */
+    public boolean isRegistered(String address){
+        return registeredAddresses.contains(address);
+    }
+
+    /**
+     *
+     * @return event bus address as string
+     */
     @Override
     public String toString(){
         return this.address;

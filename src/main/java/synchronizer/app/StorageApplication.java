@@ -15,6 +15,8 @@ import synchronizer.models.SharedDataMapAddress;
 import synchronizer.tasks.Task;
 import synchronizer.verticles.storage.ActionReceiverVerticle;
 import synchronizer.verticles.storage.ActionSenderVerticle;
+import synchronizer.verticles.storage.LocalFileSystemWalkerVerticle;
+import synchronizer.verticles.storage.SyncVerticle;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -53,10 +55,19 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
         logger.warn(String.format("%s: starting Storage application on path %s",getIpAddress(), path.toString()));
 
         // deploy all storage application verticles
-        vertx.deployVerticle(new ActionReceiverVerticle(path, new EventBusAddress("filesystem.incoming.actions"), new SharedDataMapAddress("global.path.structure")));
+        vertx.deployVerticle(new ActionReceiverVerticle(path, new EventBusAddress("incoming.actions"), new SharedDataMapAddress("global.path")));
 
-        vertx.deployVerticle(new ActionSenderVerticle(path, new EventBusAddress("filesystem.outcoming.actions"), new SharedDataMapAddress("local.path.structure")));
+        vertx.deployVerticle(new ActionSenderVerticle(path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("local.path")));
 
+        // run local scan every 25 seconds
+//        vertx.setPeriodic(25000, v->{
+//            vertx.deployVerticle(new LocalFileSystemWalkerVerticle(path));
+//        });
+
+        // run maps sync verticle every 10 seconds
+//        vertx.setPeriodic(10000, v->{
+//            vertx.deployVerticle(new SyncVerticle(new SharedDataMapAddress("global.path"), new SharedDataMapAddress("local.map")));
+//        });
 
     }
 

@@ -12,10 +12,9 @@ between multiple computers.
     
 ### Principles
  * EventBus Actions
-    *
-    *
-    *
- * SharedData 
+    * outcoming.actions
+    * incoming.actions
+ * SharedData local maps
     * local.path
     * global.path
  * Events
@@ -34,13 +33,6 @@ between multiple computers.
     * DevicePaused
     * DeviceResumed
     
- * Service
-    * tcpDial
-    * tcpListen
-    
- * Verification
-    * add computer with Unique ID and IP
-    
     
 ### Design/Functionality
  * Multi Threaded Server Application
@@ -57,12 +49,12 @@ between multiple computers.
         * transmit actions
         * publish/receive event bust events
 
-
 ### Dependencies
 * [vertex](https://vertx.io)
-* [apache commons-net]()
-* [apache commons-io]()
-* [apache-commons-cli]()
+* [apache commons-net](https://mvnrepository.com/artifact/commons-net/commons-net)
+* [apache commons-io](https://mvnrepository.com/artifact/commons-io/commons-io)
+* [apache-commons-cli](https://mvnrepository.com/artifact/commons-cli/commons-cli)
+* [apache-commons-codec](https://mvnrepository.com/artifact/commons-codec/commons-codec/1.9)
 
 ### How to compile and run project
 1) Compile
@@ -95,8 +87,39 @@ Message on the other side contains file raw data (deltas).
 Ack/Nack are action type representing acknowledgement of a message - validated acceptance 
 of file data.
 
-## Round Robin Algorithm
+# Actions scheme:
 
+- Modify:
+   ```json
+    {
+      "type": {
+        "MODIFY": {
+          "path": "/opt/dir/modifiedFile.txt",
+          "checksum": "abcdef"
+        }
+      }
+    }
+    ```
+- Create:
+    ```json
+    {
+      "type": {
+        "CREATE": {
+          "path": "/opt/dir/createdFile.txt",
+        }
+      }
+    }
+    ```
+- Delete:
+    ```json
+    {
+      "type": {
+        "DELETE": {
+          "path": "/opt/dir/deletedFile.txt",
+        }
+      }
+    }
+    ```
 ### Implementation Guide:
 
 ## scatter-gather protocol
@@ -182,44 +205,35 @@ of file data.
 ```java
     // add peer on host 10.0.0.5 and listening port 2017
     TCPPeer tcpPeer = new TCPPeer(myHost,port,new NetClientOptions().setReconnectAttempts(5).setReconnectInterval(5000));
+   
+    
+    // add client-server handlers
+   tcpPeer.addClientHandler(event->{
+      // handle handler event
+   });
+   tcp.addServerHandler(event->{
+      // handle handler event 
+   });
+   
     // deploy tcp peer verticle
     // on deploy peer will connect to other peers 
     vertx.deployVerticle(tcpPeer);
 
 ```
 
-* Create server handlers for TCP peer (listening for incoming actions from other peers)
+* Create client-server handlers for TCP peer (listening for incoming actions from other peers)
 ```java
+    private Handlers serverHandlers = new Handlers(event -> {
+        // dummy handler
+    });
 
-// server handlers
-// default handler is log hander (because server must have at least one handler registered)
-ServerHandlers serverHandlers = new ServerHandlers(new LogHandler());
-
-serverHandlers.add(new ActionHandler() {
-            @Override
-            public void handle(NetSocket event) {
-
-            }
-});
-
-* Create client handlers for TCP peer (sending outcoming actions to other peers)
-```java
-
-
-```
-
-
-// listen with server configurations and register server handlers
-listen(serverHandlers);
-```
-
-* Consume EventBust action messages
-```java
-
-
-```
-
-
+    // client handlers (receive actions from other peers)
+    // default handler must be registered - registering dummy handler
+    private Handlers clientHandlers = new Handlers(event -> {
+        // dummy handler
+    });
+``` 
+__Important__: after tcpPeer is deployed it is not allowed to add client-server handlers.
 
         
         
@@ -263,6 +277,9 @@ docker run --net mynet123 --ip 172.18.0.20 -it --rm synchronizer:latest
 build:
 	@mvn package
 
+# build java project and build docker image
+build-all: clean build build-docker
+
 # clean java targets (jar and .class files)
 clean:
 	@mvn clean
@@ -276,24 +293,16 @@ build-docker:
 	@docker build . -t synchronizer:latest
 
 # run all docker clients
-run-all: run-docker-client-1 run-docker-client-2 run-docker-client-3 run-docker-client-4
+run-all: run-docker-client-1 run-docker-client-2
 
 # run docker client 1
 run-docker-client-1:
-	@docker run --net mynet123 --ip 172.18.0.10 -it --rm synchronizer:latest
+	@docker run --rm --net mynet123 --ip 172.18.0.10 -it  synchronizer:latest
 
 run-docker-client-2:
-	@docker run --net mynet123 --ip 172.18.0.15 -it --rm synchronizer:latest
-
-run-docker-client-3:
-	@docker run --net mynet123 --ip 172.18.0.17 -it --rm synchronizer:latest
-
-run-docker-client-4:
-	@docker run --net mynet123 --ip 172.18.0.20 -it --rm synchronizer:latest
-
+	@docker run --rm --net mynet123 --ip 172.18.0.15 -it synchronizer:latest
 
 # kill all docker clients
 kill:
 	docker stop $(docker ps -q --filter ancestor=<synchronizer:latest> )
-
 ```

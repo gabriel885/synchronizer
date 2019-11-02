@@ -23,11 +23,11 @@ public abstract class AbstractMultiThreadedApplication{
     // no more than one task will be active at any given time.
     protected final ExecutorService sequentTasks;
 
-    // vertx instance
-    protected final Vertx vertx = Vertx.vertx();
+    // vertx instance. Must be static otherwise application will not be able to communicate!!
+    protected final static Vertx vertx = Vertx.vertx();
 
     // vertx event bus
-    protected final EventBus eb = vertx.eventBus();
+    protected final static EventBus eb = vertx.eventBus();
 
     // ExecutorService meta information
     class TaskMeta {
@@ -49,7 +49,6 @@ public abstract class AbstractMultiThreadedApplication{
 
     public AbstractMultiThreadedApplication() {
         this(TaskMeta.maxPoolSize);
-
     }
 
     /**

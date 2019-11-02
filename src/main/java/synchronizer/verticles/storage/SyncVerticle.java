@@ -7,6 +7,7 @@ import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.shareddata.SharedData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import synchronizer.models.EventBusAddress;
 import synchronizer.models.File;
 import synchronizer.models.SharedDataMapAddress;
 
@@ -23,7 +24,7 @@ public class SyncVerticle extends AbstractVerticle {
     // logger
     private static final Logger logger = LogManager.getLogger(SyncVerticle.class);
 
-
+    // shared data local map
     private SharedData sd;
     private SharedDataMapAddress localMapName, globalMapName;
 
@@ -31,7 +32,7 @@ public class SyncVerticle extends AbstractVerticle {
     public SyncVerticle(SharedDataMapAddress globalPathStructureMap, SharedDataMapAddress localPathStructureMap){
         this.localMapName = localPathStructureMap;
         this.globalMapName = globalPathStructureMap;
-        this.sd = vertx.sharedData();
+        this.sd = Vertx.vertx().sharedData();
     }
 
 
@@ -45,6 +46,7 @@ public class SyncVerticle extends AbstractVerticle {
             // check that key exists
             if (!localMap.containsKey(entry.getKey())){
                 logger.info(String.format("Found file %s that does not exists locally",entry.getKey()));
+
                 // request for that file from downloadFileVerticle?
             }
         }
@@ -53,6 +55,5 @@ public class SyncVerticle extends AbstractVerticle {
 
     @Override
     public void stop(Future<Void> stopFuture) throws Exception{
-
     }
 }

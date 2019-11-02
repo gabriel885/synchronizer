@@ -1,12 +1,14 @@
 package synchronizer.app;
 
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.net.NetClientOptions;
+import io.vertx.core.net.NetServerOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import synchronizer.models.EventBusAddress;
 import synchronizer.models.Peer;
-import synchronizer.verticles.p2p.NetPeer;
+import synchronizer.verticles.p2p.PublishOutcomingEventsVerticle;
 import synchronizer.verticles.p2p.TCPPeer;
-
 import java.net.InetAddress;
 import java.util.*;
 
@@ -25,6 +27,13 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     // reconnect attempt interval
     private static final int reconnectInterval = 5000; // 5 seconds
 
+    // When you deploy another server on the same host and port as an existing server it
+    // doesn’t actually try and create a new server listening on the same host/port.
+    // Instead it internally maintains just a single server, and, as incoming connections
+    // arrive it distributes them in a round-robin fashion to any of the connect handlers.
+    // Consequently Vert.x TCP servers can scale over available cores while each instance
+    // remains single threaded.
+    private static final int tcpInstances = 5;
     // peer's listening port
     private final int port = 2020;
 
@@ -50,7 +59,7 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
             peers.add(new Peer(host,port));
         }
 
-        // exlude myself from list of peers
+        // exclude myself from list of peers
         Iterator<Peer> itr = peers.iterator();
         // log peers
         while (itr.hasNext()){
@@ -63,6 +72,15 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
         // TODO: define default net server options
         tcpPeer = new TCPPeer(myHost, port, peers, new NetClientOptions().setReconnectAttempts(reconnectAttemps).setReconnectInterval(reconnectInterval));
 
+        tcpPeer.addClientHandler(event->{
+            logger.info(event.toString());
+        });
+        // publish outcoming events handler
+        //tcpPeer.addClientHandler(new PublishOutcomingEventsHandler(new EventBusAddress("outcoming.actions")));
+
+        // apply incoming events handler
+        //tcpPeer.addServerHandler(new ApplyIncomingEventsHandler(new EventBusAddress("incoming.actions")));
+
 
     }
 
@@ -73,6 +91,8 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     @Override
     public void start() throws Exception {
 
+
+        vertx.deployVerticle(new PublishOutcomingEventsVerticle(tcpPeer,new EventBusAddress("outcoming.actions")));
 
         // TODO: set deployment options
         // deploy tcp peer
@@ -88,6 +108,7 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
      */
     @Override
     public void kill() {
+        vertx.close();
         logger.warn("P2PApplication is shutting down...");
         vertx.close();
     }

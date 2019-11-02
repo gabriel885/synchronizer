@@ -44,62 +44,11 @@ public abstract class AbstractPeer extends AbstractVerticle{
         this.config = new PeerConfig();
     }
 
-
-//    /**
-//     *  return true if peer exists in known peers, otherwise return false
-//     * @param peerName - peer name to check if exists
-//     * @return true if peer exists and it is know
-//     */
-//    protected boolean peerExists(String peerName){
-//        if (netPeers.){
-//            return true;
-//        }
-//        return false;
-//    }
-//
-//    /**
-//     * add new peer to peers collection but don't join
-//     * @param peer
-//     */
-//    protected final void add(NetPeer peer){
-//        this.peers.put(peer.getPeerName(),peer);
-//    }
-//
-//    /**
-//     * remove per from peer's collection
-//     * @param peer
-//     * @return
-//     */
-//    protected final NetPeer remove(NetPeer peer){
-//        return this.peers.remove(peer.getPeerName());
-//    }
-//
-//    /**
-//     * remove peer from peer's collection
-//     * @param peerName
-//     * @return
-//     */
-//    protected final NetPeer remove(String peerName){
-//        return this.peers.remove(peerName);
-//    }
-//    /**
-//     *  return true if peer exists in known peers, otherwise return false
-//     * @param peer - NetPeer to check if exists
-//     * @return
-//     */
-//    public boolean peerExists(NetPeer peer){
-//        return peerExists(peer.getPeerName());
-//    }
-//
-//    /**
-//     * AbstractPeer should return a list of all the peers he knows about
-//     * @return
-//     */
-//    public Collection<NetPeer> getAllRegisteredPeers(){
-//        return this.peers.values();
-//    }
-
-
+    /**
+     * validate host and port
+     * @param string
+     * @return
+     */
     public boolean validateHostAndPort(String string){
 
         try {

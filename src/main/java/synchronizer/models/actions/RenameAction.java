@@ -1,10 +1,12 @@
 package synchronizer.models.actions;
 
 import io.vertx.core.Future;
+import io.vertx.core.buffer.Buffer;
 import synchronizer.exceptions.PathNotFound;
 
 import java.io.File;
 
+// TODO: delete this?
 public class RenameAction extends Action {
 
     private File oldFile, newFile;
@@ -23,4 +25,18 @@ public class RenameAction extends Action {
 
     }
 
+    @Override
+    public Buffer bufferize() {
+        return Buffer.buffer(toJson());
+    }
+
+    @Override
+    public String toJson() {
+        return "";
+    }
+
+    @Override
+    public String toString() {
+        return null;
+    }
 }

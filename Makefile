@@ -2,6 +2,9 @@
 build:
 	@mvn package
 
+# build java project and build docker image
+build-all: clean build build-docker
+
 # clean java targets (jar and .class files)
 clean:
 	@mvn clean
@@ -24,7 +27,7 @@ run-docker-client-1:
 run-docker-client-2:
 	@docker run --rm --net mynet123 --ip 172.18.0.15 -it synchronizer:latest
 
-
 # kill all docker clients
 kill:
 	docker stop $(docker ps -q --filter ancestor=<synchronizer:latest> )
+

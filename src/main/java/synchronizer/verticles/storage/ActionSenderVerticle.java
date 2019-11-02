@@ -2,11 +2,14 @@ package synchronizer.verticles.storage;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageProducer;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 
+import io.vertx.core.net.SocketAddress;
 import io.vertx.core.shareddata.LocalMap;
 import org.apache.commons.io.monitor.FileAlterationListener;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
@@ -14,8 +17,12 @@ import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.models.*;
+import synchronizer.models.actions.CreateAction;
+import synchronizer.models.actions.DeleteAction;
+import synchronizer.models.actions.ModifyAction;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.nio.file.Path;
 
 
@@ -45,141 +52,180 @@ public class ActionSenderVerticle extends AbstractVerticle {
     // observable
     private FileAlterationListener listener;
 
+    // event bus
+    private EventBus eb;
+
+    // address to publish to
+    private EventBusAddress outcomingAddress;
+
+    // local map address to log local alternations
+    private SharedDataMapAddress localMapAddress;
+
+    // interval scanning for local file system alternations
     private final int  MONITOR_INTERVAL = 400; // milliseconds
+
+    // my host (used for logging)
+    private String host;
 
     /**
      *
      * @param path - local path
-     * @param address - event bus address to broadcast outcoming alternations
+     * @param outcomingAddress - event bus address to broadcast outcoming alternations
      * @param localMapAddress - SharedData map address for local path structure
      */
-    public ActionSenderVerticle(Path path, EventBusAddress address, SharedDataMapAddress localMapAddress){
+    public ActionSenderVerticle(Path path, EventBusAddress outcomingAddress, SharedDataMapAddress localMapAddress){
 
-        EventBus eb = Vertx.vertx().eventBus();
-        this.producer = eb.publisher(address.toString());
-        logger.info("publishing to: " + address.toString());
+        this.outcomingAddress = outcomingAddress;
+        this.localMapAddress = localMapAddress;
 
         this.observer = new FileAlterationObserver(path.toString());
         this.monitor = new FileAlterationMonitor(MONITOR_INTERVAL);
 
+        this.host = getHost();
+    }
+
+    @Override
+    public void start() throws Exception{
+
+        // initialize vertx stuff
+        this.eb = vertx.eventBus();
+        this.producer = this.eb.publisher(this.outcomingAddress.toString());
 
         this.listener = new FileAlterationListener() {
+            // max number of retries
+            private int MAX_RETRY=7;
+            // attempts made
+            private int attempts=0;
 
             // action object
             JsonObject actionObject = new JsonObject();
 
 
-               @Override
-               public void onStart(org.apache.commons.io.monitor.FileAlterationObserver observer) {
+            @Override
+            public void onStart(org.apache.commons.io.monitor.FileAlterationObserver observer) {
 
-                   // sync initial path state?
-                   // save in shared data the initial hierarchy?
-               }
-
-
-               @Override
-               public void onFileCreate(File file) {
-                   // code for processing creation event
-                   //ActionSenderVerticle.this.producer.write(new CreateAction(null, file));
-
-                   // create action object and send to the event bus
-                   actionObject.put("CREATE",file.getPath());
-                   ActionSenderVerticle.this.producer.write(actionObject);
-                   logger.info(actionObject.toString());
-                   actionObject.clear();
-
-                   // update local.path.structure SharedData
-                   vertx.sharedData().getLocalMap(localMapAddress.toString()).put(file.getName(),new synchronizer.models.File(file));
-
-               }
-
-               @Override
-               public void onFileChange(File file) {
-                   // code for processing change event
-                   // ActionSenderVerticle.this.producer.write(new ModifyAction(null, file));
-                   actionObject.put("MODIFY",file.getPath());
-                   ActionSenderVerticle.this.producer.write(actionObject);
-                   logger.info(actionObject.toString());
-                   actionObject.clear();
+                // sync initial path state?
+                // save in shared data the initial hierarchy?
+            }
 
 
-                   // update last modification time of a file
-                   // TODO: throws NullPointerException Error
-                   //
-                  // synchronizer.models.File f = (synchronizer.models.File)vertx.sharedData().getLocalMap(localMapAddress.toString()).get(file.toString());
-                   //f.updateLastModification();
-               }
+            @Override
+            public void onFileCreate(File file)  {
+                // create action object and send to the event bus
+                actionObject = new JsonObject(new CreateAction(file.toPath()).toJson());
+                publish(actionObject);
 
-               @Override
-               public void onFileDelete(File file) {
+                // update local.path.structure SharedData
+                vertx.sharedData().getLocalMap(localMapAddress.toString()).put(file.getName(),new synchronizer.models.File(file));
 
-                   // code for processing deletion event
-                   //ActionSenderVerticle.this.producer.write(new DeleteAction(null, file));
-                   actionObject.put("DELETE",file.getPath());
-                   ActionSenderVerticle.this.producer.write(actionObject);
-                   logger.info(actionObject.toString());
-                   actionObject.clear();
+                //logger.info(vertx.sharedData().getLocalMap(localMapAddress.toString()).entrySet());
+            }
 
-                   // update local.path.structure SharedData
-                   vertx.sharedData().getLocalMap(localMapAddress.toString()).remove(file.toString());
-               }
+            @Override
+            public void onFileChange(File file) {
+                actionObject = new JsonObject(new ModifyAction(file.toPath()).toJson());
+                publish(actionObject);
+            }
 
+            @Override
+            public void onFileDelete(File file) {
+                actionObject = new JsonObject(new DeleteAction(file.toPath()).toJson());
+                publish(actionObject);
 
-               @Override
-               public void onDirectoryCreate(File dir) {
-                   //ActionSenderVerticle.this.producer.write(new CreateAction(null, dir));
-                   actionObject.put("CREATE",dir.getPath());
-                   ActionSenderVerticle.this.producer.write(actionObject);
-                   logger.info(actionObject.toString());
-                   actionObject.clear();
+                // update local.path.structure SharedData
+                vertx.sharedData().getLocalMap(localMapAddress.toString()).remove(file.toString());
+            }
 
 
-               }
+            @Override
+            public void onDirectoryCreate(File dir) {
+                actionObject = new JsonObject(new CreateAction(dir.toPath()).toJson());
+                publish(actionObject);
+            }
 
-               @Override
-               public void onDirectoryChange(File dir) {
-                   logger.info(String.format("Directory %s changed", dir.toString()));
-                   //ActionSenderVerticle.this.producer.write(new ModifyAction(null, dir));
-                   actionObject.put("MODIFY",dir.getPath());
-                   ActionSenderVerticle.this.producer.write(actionObject);
-                   logger.debug(actionObject.toString());
-                   actionObject.clear();
-               }
+            @Override
+            public void onDirectoryChange(File dir) {
+                //ActionSenderVerticle.this.producer.write(new ModifyAction(null, dir));
+                actionObject = new JsonObject(new ModifyAction(dir.toPath()).toJson());
+                publish(actionObject);
+            }
 
-               @Override
-               public void onDirectoryDelete(File dir) {
-                   //ActionSenderVerticle.this.producer.write(new DeleteAction(null, dir));
-                   actionObject.put("DELETE",dir.getPath());
-                   logger.info(actionObject.toString());
-                   ActionSenderVerticle.this.producer.write(actionObject);
-                   actionObject.clear();
-               }
+            @Override
+            public void onDirectoryDelete(File dir) {
+                //ActionSenderVerticle.this.producer.write(new DeleteAction(null, dir));
+                actionObject = new JsonObject(new DeleteAction(dir.toPath()).toJson());
+                publish(actionObject);
+            }
 
-               @Override
-               public void onStop(FileAlterationObserver fileAlterationObserver) {
+            @Override
+            public void onStop(FileAlterationObserver fileAlterationObserver) {
+                // close event bus producer
+            }
 
-               }
+            /**
+             * publish action to event bus
+             * @param actionObject
+             */
+            public void publish(JsonObject actionObject){
+                logger.info(String.format("%s %s", ActionSenderVerticle.this.host, actionObject.toString()));
 
-           };
+                // calculate checksum and only if checksum differs publish to event bus
+                ActionSenderVerticle.this.producer.send(actionObject, reply->{
+                    // if no ACK was send back
+                    if (reply.failed()){
+                        // resend
+                        if (attempts<MAX_RETRY){
+                            publish(actionObject);
+                        }else{
+                            // give up
+                            attempts=1;
+                        }
+                    }else{
+                        // reset attempts made
+                        attempts=1;
+                    }
+                });
+                actionObject.clear();
 
+                // TODO: update local path shared data local map
+                // update last modification time of a file
+                // TODO: throws NullPointerException Error
+                //
+                // synchronizer.models.File f = (synchronizer.models.File)vertx.sharedData().getLocalMap(localMapAddress.toString()).get(file.toString());
+                //f.updateLastModification();
 
-    }
+            }
 
-    @Override
-    public void start(Future<Void> startFuture) throws Exception{
+        };
+
         observer.addListener(listener);
         monitor.addObserver(observer);
         logger.debug("Starting ActionsSenderVerticle");
         monitor.start();
-        startFuture.complete();
+        logger.info(String.format("%s publishing actions to event bus address: %s", this.host ,outcomingAddress.toString()));
     }
 
     @Override
     public void stop(Future<Void> stopFuture) throws Exception{
         // TODO: vertx told not to call stop()
         super.stop(stopFuture);
-        logger.error(String.format("ActionSenderVerticle failed %s", stopFuture.result()));
+        logger.error(String.format("%s ActionSenderVerticle failed %s", this.host, stopFuture.result()));
     }
 
+    /**
+     * get local host
+     * NOTE: do not call this in event-loop - might block it
+     * @return
+     */
+    public String getHost(){
+        InetAddress inetAddress;
+        try{
+            inetAddress = InetAddress.getLocalHost();
+        }catch (Exception e){
+            // cry
+            return "Unknown host";
+        }
+        return inetAddress.getHostAddress();
 
+    }
 }

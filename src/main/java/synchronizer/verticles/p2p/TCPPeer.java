@@ -4,17 +4,19 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.NetServerOptions;
+import io.vertx.core.net.NetSocket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import sun.rmi.log.LogHandler;
+import synchronizer.models.EventBusAddress;
 import synchronizer.models.File;
 import synchronizer.models.Peer;
 import synchronizer.models.actions.Action;
-import synchronizer.verticles.p2p.handlers.LogHandler;
-import synchronizer.verticles.p2p.handlers.ClientHandlers;
-import synchronizer.verticles.p2p.handlers.ServerHandlers;
+import synchronizer.verticles.p2p.handlers.*;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -33,14 +35,19 @@ public class TCPPeer extends NetPeer{
     private static final Logger logger = LogManager.getLogger(TCPPeer.class);
 
     // server handlers (send actions to other peers)
-    private ServerHandlers serverHandlers = new ServerHandlers(new LogHandler(this.getHost()));
+    // default handler must be registered - registering dummy handler
+    private Handlers serverHandlers = new Handlers(event -> {
+        // dummy handler
+    });
 
     // client handlers (receive actions from other peers)
-    private ClientHandlers clientHandlers = new ClientHandlers(new LogHandler(this.getHost()));
+    // default handler must be registered - registering dummy handler
+    private Handlers clientHandlers = new Handlers(event -> {
+        // dummy handler
+    });
 
-    // all instantiated tcp peers in application
-    private static List<TCPPeer> tcpPeers = new ArrayList<>();
-
+    // true when tcp peer is deployed
+    private boolean running = false;
 
     /**
      * initialize tcp peer
@@ -79,6 +86,7 @@ public class TCPPeer extends NetPeer{
     }
 
     /**
+     * NOTE: client-server handlers can be added only before the verticle is deployed!
      * initialize tcp peer with net client and server options
      * @param hostname
      * @param port
@@ -89,21 +97,44 @@ public class TCPPeer extends NetPeer{
      */
     public TCPPeer(String hostname, int port, Set<Peer> peers, NetClientOptions clientOptions, NetServerOptions serverOptions) throws Exception{
         super(hostname, port, peers, clientOptions, serverOptions);
-
-        // add client-server handlers
     }
+
+    /**
+     * add client handlers
+     * @param handler
+     */
+    public void addClientHandler(ActionHandler handler){
+        if (!running){
+            this.clientHandlers.add(handler);
+        }
+        else{
+            logger.info("Failed to add clienr handler %s, client already connected...", handler.getClass());
+        }
+    }
+
+    /**
+     * add server handlers
+     * @param handler
+     */
+    public void addServerHandler(ActionHandler handler){
+        if (!running){
+            this.serverHandlers.add(handler);
+        }
+        else{
+            logger.info("Failed to add server handler %s, server already listening...", handler.getClass());
+        }
+    }
+
 
     @Override
     public void start(){
 
+        running = true;
+
+        // deploy all deployable handlers
         // connect to peers in network
         listen(serverHandlers);
         connect(clientHandlers);
-
-        // deploy event bus listening verticles
-
-        // vertx.deployVerticle(); // incoming.actions
-        // vertx.deployVerticle(); // outcoming.actions
 
         logger.info(String.format("%s is deployed", this.getHost()));
     }
@@ -111,7 +142,10 @@ public class TCPPeer extends NetPeer{
 
     @Override
     public void stop(){
-        // automatically closes all servers and clients that where created on start
+        // close tcp server and client
+        this.server.close();
+        this.client.close();
+
         logger.info(String.format("%s is undeployed", this.getHost()));
     }
 
@@ -128,7 +162,9 @@ public class TCPPeer extends NetPeer{
         //
         for (String peerName: connectedPeers){
             Peer peer = peers.get(peerName);
-
+            // TODO: CREATE tcpPeer with broadcast client-server net options
+            // TODO: and connect broadcast handlers?
+           // connect(new SendActionHander(action.Bufferize()));
         }
 
        // CompositeFuture.all]

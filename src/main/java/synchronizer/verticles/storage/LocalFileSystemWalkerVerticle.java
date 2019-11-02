@@ -14,6 +14,7 @@ import java.util.List;
 
 // responsible for scanning all inner directories and files inside a path
 // and update shared data path structure map
+// used to compensate failed action receiving (ran as periodic verticle every 20 seconds)
 public class LocalFileSystemWalkerVerticle extends AbstractVerticle {
 
     // logger
@@ -58,7 +59,6 @@ public class LocalFileSystemWalkerVerticle extends AbstractVerticle {
     @Override
     public void stop(Future<Void> stopFuture){
         stopFuture.complete();
-
     }
 
 }
