@@ -63,7 +63,7 @@ mvn package
 ```
 2) Run
 ```bash
-java -jar target/synchronizer-jar-with-dependencies.jar -p /Users/gabrielmunits/opt/dir -d 172.18.0.10:2020 172.18.0.15:2020
+java -jar target/synchronizer-jar-with-dependencies.jar -p /opt/dir -d 172.18.0.10:2020 172.18.0.15:2020
 ```
 Or (using makefile) running 4 docker containers
 ```bash
@@ -76,11 +76,6 @@ docker exec container-name-1 /bin/bash
 docker exec container-name-2 /bin/bash
 
 ```
-
-### Imitating isolated hosts docker containers (each pod runs a container of "synchronizer")
-![pods](docs/pods.png)
-
-
 ## Action vs Message
 Action represent modification type like rename,create or delete action.
 Message on the other side contains file raw data (deltas).
@@ -249,8 +244,6 @@ docker network create --subnet=172.18.0.0/16 mynet123
 ```bash
 172.18.0.10:2020
 172.18.0.15:2020
-172.18.0.17:2020
-172.18.0.20:2020
 ```
 
 3) Run docker containers with "synchronizer" software
@@ -262,12 +255,4 @@ docker run --net mynet123 --ip 172.18.0.10 -it --rm synchronizer:latest
 Client 2:
 ```bash
 docker run --net mynet123 --ip 172.18.0.15 -it --rm synchronizer:latest  
-```
-Client 3:
-```bash
-docker run --net mynet123 --ip 172.18.0.17 -it --rm synchronizer:latest  
-```
-Client 4:
-```bash
-docker run --net mynet123 --ip 172.18.0.20 -it --rm synchronizer:latest  
 ```
