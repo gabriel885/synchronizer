@@ -12,6 +12,7 @@ import synchronizer.models.File;
 import java.nio.file.Path;
 import java.util.List;
 
+// TODO: erase this!!
 // responsible for scanning all inner directories and files inside a path
 // and update shared data path structure map
 // used to compensate failed action receiving (ran as periodic verticle every 20 seconds)
@@ -26,34 +27,31 @@ public class LocalFileSystemWalkerVerticle extends AbstractVerticle {
         this.path = path;
     }
 
-    // TODO: BAD!!
     @Override
     public void start(Future<Void> startFuture) {
         FileSystem fs = vertx.fileSystem();
         SharedData sharedData = vertx.sharedData();
 
+        // list of files in path
         List<String> files;
 
+        // read file system directory (blocking operation to prevent race conditions)
         files = fs.readDirBlocking(this.path.toString());
 
-        // Note: File implements io.vertx.core.shareddata.Shareable
-        LocalMap<String, synchronizer.models.File> pathMap =  sharedData.getLocalMap("local.path");
-        pathMap.clear();
+        LocalMap<String, synchronizer.models.File> localMap =  sharedData.getLocalMap("local.path");
 
-        for (String file: files){
-            pathMap.put(file,new File(file));
-        }
+        // erase previous data
+        localMap.clear();
 
-
-        logger.info("Periodic Scan:");
-
-        StringBuilder mapAsString = new StringBuilder();
-        mapAsString.append("\n");
-        for (String fileName: pathMap.keySet()){
-            mapAsString.append(fileName+"\n");
-        }
-        logger.info(mapAsString.toString());
-        startFuture.complete();
+//        logger.info("Periodic Scan:");
+//
+//        StringBuilder mapAsString = new StringBuilder();
+//        mapAsString.append("\n");
+//        for (String fileName: pathMap.keySet()){
+//            mapAsString.append(fileName+"\n");
+//        }
+//        logger.info(mapAsString.toString());
+//        startFuture.complete();
     }
 
     @Override

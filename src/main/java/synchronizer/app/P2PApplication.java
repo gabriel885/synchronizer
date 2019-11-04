@@ -1,15 +1,17 @@
 package synchronizer.app;
 
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.NetServerOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.models.EventBusAddress;
 import synchronizer.models.Peer;
-import synchronizer.verticles.p2p.PublishOutcomingEventsVerticle;
+import synchronizer.verticles.p2p.ApplyIncomingActionsVerticle;
+import synchronizer.verticles.p2p.PublishOutcomingActionsVerticle;
 import synchronizer.verticles.p2p.TCPPeer;
 import java.net.InetAddress;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 
@@ -45,9 +47,12 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     // tcp peer of current host
     private TCPPeer tcpPeer;
 
+    // local monitorable path
+    private Path path;
 
 
-    public P2PApplication(String []devices) throws Exception{
+
+    public P2PApplication(String path,String []devices) throws Exception{
         // initialise p2p applicaiton stuff
         this.inetAddress = inetAddress.getLocalHost();
         this.myHost = this.inetAddress.getHostAddress();
@@ -68,20 +73,9 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
                 itr.remove();
             }
         }
-
+        this.path = Paths.get(path);
         // TODO: define default net server options
         tcpPeer = new TCPPeer(myHost, port, peers, new NetClientOptions().setReconnectAttempts(reconnectAttemps).setReconnectInterval(reconnectInterval));
-
-        tcpPeer.addClientHandler(event->{
-            logger.info(event.toString());
-        });
-        // publish outcoming events handler
-        //tcpPeer.addClientHandler(new PublishOutcomingEventsHandler(new EventBusAddress("outcoming.actions")));
-
-        // apply incoming events handler
-        //tcpPeer.addServerHandler(new ApplyIncomingEventsHandler(new EventBusAddress("incoming.actions")));
-
-
     }
 
     /**
@@ -90,16 +84,14 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
      */
     @Override
     public void start() throws Exception {
-
-
-        vertx.deployVerticle(new PublishOutcomingEventsVerticle(tcpPeer,new EventBusAddress("outcoming.actions")));
-
-        // TODO: set deployment options
         // deploy tcp peer
         vertx.deployVerticle(tcpPeer);
 
+        // publish local events to all peers
+        vertx.deployVerticle(new PublishOutcomingActionsVerticle(path ,tcpPeer,new EventBusAddress("outcoming.actions")));
 
-       // logger.warn(String.format("%s: starting P2P application on port %d",inetAddress.getHostAddress(),port));
+        // apply global events locally
+        vertx.deployVerticle(new ApplyIncomingActionsVerticle(tcpPeer,new EventBusAddress("incoming.actions")));
     }
 
 

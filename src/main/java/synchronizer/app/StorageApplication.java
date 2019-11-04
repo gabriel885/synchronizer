@@ -52,12 +52,12 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
      */
     @Override
     public void start() throws Exception {
-        logger.warn(String.format("%s: starting Storage application on path %s",getIpAddress(), path.toString()));
+        logger.warn(String.format("%s: starting Storage application on path %s",getIpAddress(), this.path.toString()));
 
         // deploy all storage application verticles
-        vertx.deployVerticle(new ActionReceiverVerticle(path, new EventBusAddress("incoming.actions"), new SharedDataMapAddress("global.path")));
+        vertx.deployVerticle(new ActionReceiverVerticle(this.path, new EventBusAddress("incoming.actions"), new SharedDataMapAddress("global.path")));
 
-        vertx.deployVerticle(new ActionSenderVerticle(path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("local.path")));
+        vertx.deployVerticle(new ActionSenderVerticle(this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("local.path")));
 
         // run local scan every 25 seconds
 //        vertx.setPeriodic(25000, v->{

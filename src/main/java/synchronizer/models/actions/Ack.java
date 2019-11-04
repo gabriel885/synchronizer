@@ -18,7 +18,7 @@ public class Ack extends Action {
 
     @Override
     public String toJson() {
-        return "ack";
+        return "{ack}";
     }
 
 }

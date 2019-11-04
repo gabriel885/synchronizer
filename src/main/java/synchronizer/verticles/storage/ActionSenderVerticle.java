@@ -26,11 +26,6 @@ import java.net.InetAddress;
 import java.nio.file.Path;
 
 
-// TODO: IMPORTANT
-// this.listener is not a verticle. therefore if it fails
-// we loose our listener. maybe the listener needs to be a verticle?
-
-
 // ActionSenderVerticle watch for local file system alternations.
 // It publishes the actions to the event bus.
 // It uses Observable pattern.
@@ -42,8 +37,8 @@ public class ActionSenderVerticle extends AbstractVerticle {
     // produce file system actions to event bus
     private MessageProducer<JsonObject> producer;
 
-    // passing actionObject to event bus
-    //private JsonObject actionObject;
+    // local absolute path
+    private Path path;
 
     // observer
     private FileAlterationObserver observer;
@@ -51,6 +46,9 @@ public class ActionSenderVerticle extends AbstractVerticle {
     private FileAlterationMonitor monitor;
     // observable
     private FileAlterationListener listener;
+
+    // local map
+    protected LocalMap<String, synchronizer.models.File> localMap;
 
     // event bus
     private EventBus eb;
@@ -78,6 +76,8 @@ public class ActionSenderVerticle extends AbstractVerticle {
         this.outcomingAddress = outcomingAddress;
         this.localMapAddress = localMapAddress;
 
+        this.path = path;
+
         this.observer = new FileAlterationObserver(path.toString());
         this.monitor = new FileAlterationMonitor(MONITOR_INTERVAL);
 
@@ -87,8 +87,12 @@ public class ActionSenderVerticle extends AbstractVerticle {
     @Override
     public void start() throws Exception{
 
-        // initialize vertx stuff
+        // local map
+        this.localMap = vertx.sharedData().getLocalMap(this.localMapAddress.toString());
+
+        // event bus
         this.eb = vertx.eventBus();
+        // event bus producer
         this.producer = this.eb.publisher(this.outcomingAddress.toString());
 
         this.listener = new FileAlterationListener() {
@@ -104,62 +108,74 @@ public class ActionSenderVerticle extends AbstractVerticle {
             @Override
             public void onStart(org.apache.commons.io.monitor.FileAlterationObserver observer) {
 
-                // sync initial path state?
-                // save in shared data the initial hierarchy?
+                // save in shared data the initial hierarchy
             }
 
 
             @Override
             public void onFileCreate(File file)  {
-                // create action object and send to the event bus
+                // create action object and publish it to the event bus
                 actionObject = new JsonObject(new CreateAction(file.toPath()).toJson());
                 publish(actionObject);
-
-                // update local.path.structure SharedData
-                vertx.sharedData().getLocalMap(localMapAddress.toString()).put(file.getName(),new synchronizer.models.File(file));
-
-                //logger.info(vertx.sharedData().getLocalMap(localMapAddress.toString()).entrySet());
+                // update local map
+                updateMap(file.getName(),new synchronizer.models.File(actionObject));
             }
 
             @Override
             public void onFileChange(File file) {
                 actionObject = new JsonObject(new ModifyAction(file.toPath()).toJson());
                 publish(actionObject);
+                // update local map
+                updateMap(file.getName(),new synchronizer.models.File(actionObject));
             }
 
             @Override
             public void onFileDelete(File file) {
                 actionObject = new JsonObject(new DeleteAction(file.toPath()).toJson());
                 publish(actionObject);
-
-                // update local.path.structure SharedData
-                vertx.sharedData().getLocalMap(localMapAddress.toString()).remove(file.toString());
+                // update local map
+                removeFromMap(file.getName());
             }
-
 
             @Override
             public void onDirectoryCreate(File dir) {
                 actionObject = new JsonObject(new CreateAction(dir.toPath()).toJson());
                 publish(actionObject);
+                // update local map
+                updateMap(dir.getName(),new synchronizer.models.File(actionObject));
             }
 
             @Override
             public void onDirectoryChange(File dir) {
-                //ActionSenderVerticle.this.producer.write(new ModifyAction(null, dir));
                 actionObject = new JsonObject(new ModifyAction(dir.toPath()).toJson());
                 publish(actionObject);
+                // update local map
+                updateMap(dir.getName(),new synchronizer.models.File(actionObject));
             }
 
             @Override
             public void onDirectoryDelete(File dir) {
-                //ActionSenderVerticle.this.producer.write(new DeleteAction(null, dir));
                 actionObject = new JsonObject(new DeleteAction(dir.toPath()).toJson());
                 publish(actionObject);
+                // update local map
+                removeFromMap(dir.toString());
             }
 
             @Override
             public void onStop(FileAlterationObserver fileAlterationObserver) {
                 // close event bus producer
+            }
+
+            /**
+             * delete file from local map
+             * @param file
+             */
+            public void removeFromMap(String file){
+                ActionSenderVerticle.this.localMap.remove(file.toString());
+            }
+
+            public void updateMap(String file, synchronizer.models.File f){
+
             }
 
             /**
@@ -186,14 +202,6 @@ public class ActionSenderVerticle extends AbstractVerticle {
                     }
                 });
                 actionObject.clear();
-
-                // TODO: update local path shared data local map
-                // update last modification time of a file
-                // TODO: throws NullPointerException Error
-                //
-                // synchronizer.models.File f = (synchronizer.models.File)vertx.sharedData().getLocalMap(localMapAddress.toString()).get(file.toString());
-                //f.updateLastModification();
-
             }
 
         };

@@ -2,7 +2,6 @@ package synchronizer.models.diff;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import synchronizer.verticles.p2p.PublishOutcomingEventsVerticle;
 
 import java.io.InputStream;
 import java.nio.file.Files;

@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-// client handlers
+// client-server collection of handlers
 public class Handlers {
 
     private static Set<ActionHandler> handlers = new HashSet<>();

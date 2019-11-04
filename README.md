@@ -76,12 +76,6 @@ docker exec container-name-1 /bin/bash
 docker exec container-name-2 /bin/bash
 
 ```
-## Action vs Message
-Action represent modification type like rename,create or delete action.
-Message on the other side contains file raw data (deltas).
-Ack/Nack are action type representing acknowledgement of a message - validated acceptance 
-of file data.
-
 # Actions schemes:
 
 - Modify:
@@ -97,7 +91,7 @@ of file data.
 ```json
     {
       "type": "CREATE",
-      "path": "/opt/dir/.newFile.txt.swp",
+      "path": "/opt/dir/newFile.txt",
       "checksum": "a063e188310b9cf711b0e251a349afc1",
       "timestamp": 1572730322
     }    
@@ -106,9 +100,18 @@ of file data.
 ```json
     {
       "type": "DELETE",
-      "path": "/Users/gabrielmunits/opt/dir/.newFile.txt.swp",
+      "path": "/opt/dir/.newFile.txt.swp",
       "timestamp": 1572730328
     }
+```
+- Request:
+```json
+    {
+      "type": "REQUEST",
+      "path": "/opt/dir/.newFile.txt.swp",
+      "timestamp": 1572730443
+    }
+
 ```
 ### Implementation Guide:
 

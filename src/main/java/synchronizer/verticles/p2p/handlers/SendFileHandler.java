@@ -10,7 +10,7 @@ import synchronizer.verticles.p2p.TCPPeer;
 import java.nio.file.Path;
 
 // handler sends local file path to socket
-public class SendFileHandler extends HandlerVerticle<AsyncResult<NetSocket>>{
+public class SendFileHandler implements ActionHandler<AsyncResult<NetSocket>> {
 
     // logger
     private static final Logger logger = LogManager.getLogger(SendFileHandler.class);
@@ -18,12 +18,9 @@ public class SendFileHandler extends HandlerVerticle<AsyncResult<NetSocket>>{
     // local absolute file path to send
     private String fileToSend;
 
-    // peer to send file from
-    private TCPPeer tcpPeer;
 
-    public SendFileHandler(TCPPeer tcpPeer, Path fileToSend){
+    public SendFileHandler(Path fileToSend){
         this.fileToSend = fileToSend.toAbsolutePath().toString();
-        this.tcpPeer = tcpPeer;
     }
 
     /**
@@ -35,8 +32,9 @@ public class SendFileHandler extends HandlerVerticle<AsyncResult<NetSocket>>{
         // on success connection to peer send file
         if (event.succeeded()){
             event.result().sendFile(fileToSend, res ->{
-                if (!res.succeeded()){
-                    // try to resend
+                if (res.succeeded()){ // if sent successfully
+                    logger.info(String.format("Succeeded to send file %s", fileToSend));
+                }else{
                     logger.info(String.format("Failed to send file %s", fileToSend));
                 }
             });
@@ -45,14 +43,5 @@ public class SendFileHandler extends HandlerVerticle<AsyncResult<NetSocket>>{
         }
     }
 
-    @Override
-    public void start() {
-        // send file
-      //  this.tcpPeer.sendFile(??);
-    }
 
-    @Override
-    public void stop() {
-
-    }
 }

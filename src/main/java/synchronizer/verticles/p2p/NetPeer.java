@@ -35,8 +35,14 @@ public class NetPeer extends AbstractPeer {
     // tcp server
     protected final NetServer server;
 
+    // tcp server options
+    protected final NetServerOptions serverOptions;
+
     // tcp client
     protected final NetClient client;
+
+    // tcp client options
+    protected final NetClientOptions clientOptions;
 
     /**
      *
@@ -68,7 +74,8 @@ public class NetPeer extends AbstractPeer {
         this.peerPort = port;
 
         // set server host and peer (to allow incoming connections)
-        serverOptions.setHost(host).setPort(port);
+        this.serverOptions = serverOptions.setHost(host).setPort(port);
+        this.clientOptions = clientOptions;
 
         Vertx vertx = Vertx.vertx();
         this.client = vertx.createNetClient(clientOptions);
@@ -81,7 +88,12 @@ public class NetPeer extends AbstractPeer {
      * @return reference to net server
      */
     protected final NetServer listen(){
-        return this.server.listen(peerPort);
+        NetServer server = vertx.createNetServer(serverOptions);
+        // dummy handler
+        server.connectHandler(handler->{
+
+        });
+        return server.listen();
     }
 
 
@@ -91,15 +103,9 @@ public class NetPeer extends AbstractPeer {
      * @return
      */
     protected final NetServer listen(ActionHandler handler) {
-        return this.server.listen(handler);
-    }
-
-    /**
-     * connect to specific peer a handler
-     * @return
-     */
-    protected final NetClient connect(Peer peer, ActionHandler handler){
-        return this.client.connect(peer.getPort(), peer.getHost(), handler);
+        NetServer server = vertx.createNetServer(serverOptions);
+        server.connectHandler(handler);
+        return server.listen();
     }
 
     /**
@@ -109,17 +115,18 @@ public class NetPeer extends AbstractPeer {
      */
     protected final Future<Void> listen(Handlers listenHandlers){
         Future<Void> future = Future.future();
+        NetServer server = vertx.createNetServer(serverOptions);
 
         // connect server handlers
         Iterator<ActionHandler> itr = listenHandlers.getHandlersIterator();
         while(itr.hasNext()){
             ActionHandler handler = itr.next();
             // deploy handler
-            this.server.connectHandler(handler);
+            server.connectHandler(handler);
         }
 
         // list on port
-        this.server.listen(this.peerPort,res->{
+        server.listen(res->{
             // this is handler
             if (res.succeeded()){
                 logger.info(String.format("%s is listening for connections", toString()));
@@ -134,22 +141,22 @@ public class NetPeer extends AbstractPeer {
         return future;
     }
 
-
-
+    /**
+     * connect a handler to a specific peer
+     * @param handler
+     */
+    protected final NetClient connect(Peer peer, ActionHandler handler){
+        NetClient client = vertx.createNetClient(clientOptions);
+        return client.connect(peer.getPort(), peer.getHost(), handler);
+    }
     /**
      * Connect all client handlers to all listening peers in the network
      * @param connectHandlers - client listening handlers
      * @return
      */
     protected final void connect(Handlers connectHandlers){
-
-        // connecting to all non-connected peers in the network
+        // connecting to all peers in the network
         for (Peer peer: peers.values()){
-            // skip already connected peers
-            // TODO: refactor connected peers - why do we need this?
-//            if (connectedPeers.contains(peer.getHost())){
-//                continue;
-//            }
             // register all connect handlers to client
             Iterator<ActionHandler> itr = connectHandlers.getHandlersIterator();
             while(itr.hasNext()){
@@ -166,21 +173,19 @@ public class NetPeer extends AbstractPeer {
      * @param path
      */
     protected final void sendFile(Path path){
-        // TODO: how do we know file sent succedded?
-        for (String peer: connectedPeers){
+        for (String peer: peers.keySet()){
             Peer netPeer = peers.get(peer);
-            //connect(netPeer, new SendFileHandler(path));
+            connect(netPeer, new SendFileHandler(path));
         }
     }
 
     /**
-     * send file to specific peer
+     * send file to a specific peer
      * @param peer
-     * @param path
+     * @param file
      */
-    protected final void sendFileToPeer(Peer peer, Path path){
-        Peer netPeer = peers.get(peer.getHost());
-       // connect(netPeer,new SendFileHandler(path));
+    protected final void sendFile(Peer peer, Path file) {
+        connect(peer, new SendFileHandler(file));
     }
 
     /**

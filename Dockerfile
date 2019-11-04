@@ -12,7 +12,7 @@ RUN mkdir -p /opt/dir
 RUN echo "monitorable file" > /opt/dir/example.txt
 
 # intstall vim to edit files later inside the containers
-RUN ["apt-get", "update"]
-RUN ["apt-get", "install", "-y", "vim"]
+# RUN ["apt-get", "update"]
+# RUN ["apt-get", "install", "-y", "vim"]
 
 CMD ["java", "-jar", "synchronizer-jar-with-dependencies.jar", "-p", "/opt/dir", "-d" ,"172.18.0.10:2020","172.18.0.15:2020"];

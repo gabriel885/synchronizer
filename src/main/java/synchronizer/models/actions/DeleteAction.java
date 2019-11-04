@@ -17,18 +17,8 @@ public class DeleteAction extends Action {
 
     public DeleteAction(Path fileToDelete) {
         super(ActionType.DELETE);
-
         this.fileToDelete = fileToDelete;
         this.unixTime = System.currentTimeMillis() / 1000L;
-
-
-        if (!this.fileToDelete.toFile().exists()){
-            // TODO: make it compatible with FUTURE
-            //deleteFuture.fail(new PathNotFound(String.format("File %s does not exists", fileToDelete)));
-        }
-
-        // future completed
-//        deleteFuture.complete();
     }
 
     @Override

@@ -32,7 +32,7 @@ public class Main {
 
 
             // p2p application
-            p2pApplication = new P2PApplication(cmd.getOptionValues("devices"));
+            p2pApplication = new P2PApplication(cmd.getOptionValue("path"),cmd.getOptionValues("devices"));
             p2pApplication.start();
 
         } catch(Exception e){

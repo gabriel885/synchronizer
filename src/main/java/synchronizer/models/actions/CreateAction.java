@@ -31,7 +31,7 @@ public class CreateAction extends Action {
     }
 
     /**
-     * return created file
+     * return created file path
      * @return local created file
      */
     public String getCreatedFile(){
@@ -46,16 +46,28 @@ public class CreateAction extends Action {
         return this.checksum;
     }
 
+    /**
+     * return create action as buffer
+     * @return
+     */
     @Override
     public Buffer bufferize() {
         return Buffer.buffer(toJson());
     }
 
+    /**
+     * return create actions as json string
+     * @return
+     */
     @Override
     public String toString() {
         return null;
     }
 
+    /**
+     * convert create action to object
+     * @return
+     */
     @Override
     public String toJson() {
         return new JsonObject().put("type","CREATE").put("path",this.fileToCreate.toString()).put("checksum",this.checksum).put("timestamp",this.unixTime).toString();

@@ -25,4 +25,31 @@ public abstract class Action extends JsonObject {
     // action as json string
     public abstract String toJson();
 
+    /**
+     * return true if action is valid
+     * @param jsonAction
+     * @return
+     */
+    public static boolean valid(JsonObject jsonAction){
+        if (ActionType.isValidType(jsonAction.getString("type")) && jsonAction.containsKey("path") && jsonAction.containsKey("timestamp")){
+            switch(ActionType.getType(jsonAction.toString())){
+                case DELETE: return true;
+                case MODIFY:
+                    if (!jsonAction.containsKey("checksum")){
+                        return false;
+                    }
+                case CREATE:
+                    if (!jsonAction.containsKey("checksum")){
+                        return true;
+                    }
+                case UNKNOWN: return false;
+                case REQUEST: return true;
+                case ACK: return true;
+            }
+            return true;
+        }else{
+            return false;
+        }
+    }
+
 }

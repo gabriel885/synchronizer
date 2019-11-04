@@ -2,6 +2,7 @@ package synchronizer.verticles.p2p;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.NetSocket;
@@ -151,43 +152,16 @@ public class TCPPeer extends NetPeer{
 
     /**
      * broadcast all peers an action
-     * @param action
+     * @param action - json action to transmit
      * @return - ACK/NACK action object
      */
 
-    public Future<Action> broadcast(Action action) {
-        // futures of all peers
-        List<Future> peersFutures = new ArrayList<>();
-
-        //
-        for (String peerName: connectedPeers){
+    public void broadcastAction(JsonObject action) {
+        logger.info(String.format("broadcasting to all peers %s",action.toString()));
+        for (String peerName: peers.keySet()){
             Peer peer = peers.get(peerName);
-            // TODO: CREATE tcpPeer with broadcast client-server net options
-            // TODO: and connect broadcast handlers?
-           // connect(new SendActionHander(action.Bufferize()));
+            connect(peer,new SendActionHandler(action));
         }
-
-       // CompositeFuture.all]
-
-        return null;
-    }
-
-    public Future<Action> broadcastPeer(NetPeer peer) {
-        return null;
-    }
-
-    public void sendFile(NetPeer peer) {
-
-    }
-
-    /**
-     * request file from peers using round robin algorithm
-     * @param path
-     * @return
-     */
-    public Future<File> requestFile(Path path) {
-
-        return null;
     }
 
 

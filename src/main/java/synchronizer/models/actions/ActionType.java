@@ -1,12 +1,19 @@
 package synchronizer.models.actions;
 
+import org.omg.CORBA.UNKNOWN;
+
 public enum ActionType {
-    ACK,
+    ACK, // acknowledgement
+    NACK, // negative acknowledgement
     CREATE,
-    RENAME,
     DELETE,
-    MODIFY;
+    MODIFY,
+    REQUEST, // request sending file
+    UNKNOWN;
     public static ActionType getType(String action){
+        if (action==null){
+            return ActionType.UNKNOWN;
+        }
         switch(action){
             case "ACK":
                 return ActionType.ACK;
@@ -17,7 +24,20 @@ public enum ActionType {
             case "MODIFY":
                 return ActionType.MODIFY;
                 default:
-                    return null; // unknown action type
+                    return ActionType.UNKNOWN; // unknown action type
         }
+    }
+
+
+    /**
+     * returns true if action type is valid - not unknown
+     * @param actionType
+     * @return
+     */
+    public static boolean isValidType(String actionType){
+        if (getType(actionType) == ActionType.UNKNOWN){
+            return false;
+        }
+        return true;
     }
 }

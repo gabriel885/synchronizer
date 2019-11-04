@@ -17,7 +17,7 @@ public interface Protocol {
      * @param action - action to broadcast
      * @return Future indicating if all peers connected successfully
      */
-    Future<Action> broadcast(Action action);
+    Future<Action> broadcast(JsonObject action);
 
     /**
      * send an action to a particular peer
