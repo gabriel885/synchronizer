@@ -5,7 +5,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetSocket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import synchronizer.models.actions.Action;
 
 public class SendActionHandler implements ActionHandler<AsyncResult<NetSocket>> {
 
@@ -21,7 +20,7 @@ public class SendActionHandler implements ActionHandler<AsyncResult<NetSocket>> 
 
     @Override
     public void handle(AsyncResult<NetSocket> event) {
-        if (event.succeeded()){
+        if (event.succeeded()){ // connection succeded
             logger.info(String.format("writing event %s to socket!", this.action.toBuffer()));
             event.result().write(this.action.toBuffer());
         }

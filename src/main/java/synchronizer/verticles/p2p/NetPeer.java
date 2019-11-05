@@ -1,15 +1,22 @@
 package synchronizer.verticles.p2p;
 
-import io.vertx.core.*;
-import io.vertx.core.net.*;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.net.NetClient;
+import io.vertx.core.net.NetClientOptions;
+import io.vertx.core.net.NetServer;
+import io.vertx.core.net.NetServerOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.exceptions.ApplicationFailure;
 import synchronizer.models.Peer;
-import synchronizer.verticles.p2p.handlers.*;
+import synchronizer.verticles.p2p.handlers.ActionHandler;
+import synchronizer.verticles.p2p.handlers.Handlers;
 
-import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 // binds NetServer and NetClient together as a NetPeer to listen for incoming socket connections (server)
 // and to connect to other peers (client)
@@ -125,11 +132,11 @@ public class NetPeer extends AbstractPeer {
             server.connectHandler(handler);
         }
 
-        // list on port
+        // listen on port
         server.listen(res->{
             // this is handler
             if (res.succeeded()){
-                logger.info(String.format("%s is listening for connections", toString()));
+                logger.debug(String.format("%s is listening for connections", toString()));
                 future.complete();
             }
             else{
@@ -167,81 +174,6 @@ public class NetPeer extends AbstractPeer {
         }
     }
 
-
-    /**
-     * send file to all peers
-     * @param path
-     */
-    protected final void sendFile(Path path){
-        for (String peer: peers.keySet()){
-            Peer netPeer = peers.get(peer);
-            connect(netPeer, new SendFileHandler(path));
-        }
-    }
-
-    /**
-     * send file to a specific peer
-     * @param peer
-     * @param file
-     */
-    protected final void sendFile(Peer peer, Path file) {
-        connect(peer, new SendFileHandler(file));
-    }
-
-    /**
-     * closes peer's client-server socket connections
-     * @return
-     */
-    protected final Future<Void> close(){
-        // server future (client close does not provide future)
-        Future<Void> serverFuture = Future.future();
-
-        // closing server socket
-        this.server.close(res -> {
-            if (res.succeeded()){
-                serverFuture.complete();
-            }
-            else{
-                serverFuture.fail(res.cause());
-            }
-        });
-        // closing client socket
-        this.client.close();
-
-        return serverFuture;
-    }
-
-    /**
-     *
-     * @param peerName - peer to disconnect from the server
-     * @return
-     */
-    public static final void disconnect(String peerName){
-
-        // remove from net Peers
-//        Iterator<NetPeer> itr = netPeers.iterator();
-//        while (itr.hasNext()){
-//            NetPeer nextNetPeer = itr.next();
-//
-//            // close peer's connections
-//            nextNetPeer.close();
-//
-//            if (nextNetPeer.getPeerName().equals(peerName)){
-//                itr.remove();
-//            }
-//        }
-//        // remove from all connected peers
-//        allConnectedPeers.remove(peerName);
-
-//        if (peerExists(peerName)){
-//            remove(peerName);
-//
-//            NetPeer tempPeer = netPeers.(peerName);
-//
-//            // close peer connections
-//            tempPeer.close();
-//        }
-    }
 
     /**
      * @return net server

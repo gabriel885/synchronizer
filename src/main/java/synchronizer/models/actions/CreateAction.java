@@ -1,12 +1,9 @@
 package synchronizer.models.actions;
 
-import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import synchronizer.models.diff.Checksum;
 
-import java.io.File;
 import java.nio.file.Path;
 
 /** TODO: make class static!!
@@ -17,17 +14,22 @@ public class CreateAction extends Action {
     // local file created
     private Path fileToCreate;
 
+    // file buffer
+    private Buffer fileBuffer;
+
     // created file checksum
     private String checksum;
 
     // timestamp action was performed
     private long unixTime;
 
-    public CreateAction(Path fileToCreate) {
+
+    public CreateAction(Path fileToCreate, Buffer fileBuffer) {
         super(ActionType.CREATE);
         this.fileToCreate = fileToCreate;
         this.checksum = Checksum.checksum(fileToCreate);
         this.unixTime = System.currentTimeMillis() / 1000L;
+        this.fileBuffer = fileBuffer;
     }
 
     /**
@@ -65,12 +67,24 @@ public class CreateAction extends Action {
     }
 
     /**
-     * convert create action to object
+     *     {
+     *       "type": "CREATE",
+     *       "path": "/opt/dir/newFile.txt",
+     *       "checksum": "a063e188310b9cf711b0e251a349afc1",
+     *       "timestamp": 1572730322,
+     *       "buffer" : "new content is added to new file"
+     *     }
      * @return
      */
     @Override
     public String toJson() {
-        return new JsonObject().put("type","CREATE").put("path",this.fileToCreate.toString()).put("checksum",this.checksum).put("timestamp",this.unixTime).toString();
+        return new JsonObject()
+                .put("type","CREATE")
+                .put("path",this.fileToCreate.toString())
+                .put("checksum",this.checksum)
+                .put("timestamp",this.unixTime)
+                .put("buffer",this.fileBuffer.toString())
+                .toString();
     }
 
 }

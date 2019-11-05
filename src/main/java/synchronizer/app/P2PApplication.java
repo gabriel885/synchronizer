@@ -1,7 +1,6 @@
 package synchronizer.app;
 
 import io.vertx.core.net.NetClientOptions;
-import io.vertx.core.net.NetServerOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.models.EventBusAddress;
@@ -9,10 +8,13 @@ import synchronizer.models.Peer;
 import synchronizer.verticles.p2p.ApplyIncomingActionsVerticle;
 import synchronizer.verticles.p2p.PublishOutcomingActionsVerticle;
 import synchronizer.verticles.p2p.TCPPeer;
+
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 
 public class P2PApplication extends AbstractMultiThreadedApplication {
@@ -36,6 +38,7 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     // Consequently Vert.x TCP servers can scale over available cores while each instance
     // remains single threaded.
     private static final int tcpInstances = 5;
+
     // peer's listening port
     private final int port = 2020;
 
@@ -49,6 +52,7 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
 
     // local monitorable path
     private Path path;
+
 
 
 
@@ -74,8 +78,7 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
             }
         }
         this.path = Paths.get(path);
-        // TODO: define default net server options
-        tcpPeer = new TCPPeer(myHost, port, peers, new NetClientOptions().setReconnectAttempts(reconnectAttemps).setReconnectInterval(reconnectInterval));
+        this.tcpPeer = new TCPPeer(myHost, port, peers, new NetClientOptions().setReconnectAttempts(reconnectAttemps).setReconnectInterval(reconnectInterval));
     }
 
     /**
@@ -84,14 +87,15 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
      */
     @Override
     public void start() throws Exception {
-        // deploy tcp peer
         vertx.deployVerticle(tcpPeer);
 
+        logger.info(String.format("%s is deployed", this.toString()));
+
         // publish local events to all peers
-        vertx.deployVerticle(new PublishOutcomingActionsVerticle(path ,tcpPeer,new EventBusAddress("outcoming.actions")));
+        vertx.deployVerticle(new PublishOutcomingActionsVerticle(this.path ,this.tcpPeer,new EventBusAddress("outcoming.actions")));
 
         // apply global events locally
-        vertx.deployVerticle(new ApplyIncomingActionsVerticle(tcpPeer,new EventBusAddress("incoming.actions")));
+        vertx.deployVerticle(new ApplyIncomingActionsVerticle(this.path,this.tcpPeer,new EventBusAddress("incoming.actions")));
     }
 
 

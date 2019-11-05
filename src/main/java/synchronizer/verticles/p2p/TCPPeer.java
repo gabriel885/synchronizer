@@ -1,24 +1,14 @@
 package synchronizer.verticles.p2p;
 
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.NetServerOptions;
-import io.vertx.core.net.NetSocket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import sun.rmi.log.LogHandler;
-import synchronizer.models.EventBusAddress;
-import synchronizer.models.File;
 import synchronizer.models.Peer;
-import synchronizer.models.actions.Action;
-import synchronizer.verticles.p2p.handlers.*;
+import synchronizer.verticles.p2p.handlers.Handlers;
+import synchronizer.verticles.p2p.handlers.SendActionHandler;
 
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 
@@ -30,7 +20,7 @@ import java.util.Set;
  *
  */
 // implements Protocol
-public class TCPPeer extends NetPeer{
+public class TCPPeer extends NetPeer implements Protocol{
 
     // logger
     private static final Logger logger = LogManager.getLogger(TCPPeer.class);
@@ -46,9 +36,6 @@ public class TCPPeer extends NetPeer{
     private Handlers clientHandlers = new Handlers(event -> {
         // dummy handler
     });
-
-    // true when tcp peer is deployed
-    private boolean running = false;
 
     /**
      * initialize tcp peer
@@ -100,44 +87,14 @@ public class TCPPeer extends NetPeer{
         super(hostname, port, peers, clientOptions, serverOptions);
     }
 
-    /**
-     * add client handlers
-     * @param handler
-     */
-    public void addClientHandler(ActionHandler handler){
-        if (!running){
-            this.clientHandlers.add(handler);
-        }
-        else{
-            logger.info("Failed to add clienr handler %s, client already connected...", handler.getClass());
-        }
-    }
-
-    /**
-     * add server handlers
-     * @param handler
-     */
-    public void addServerHandler(ActionHandler handler){
-        if (!running){
-            this.serverHandlers.add(handler);
-        }
-        else{
-            logger.info("Failed to add server handler %s, server already listening...", handler.getClass());
-        }
-    }
-
-
     @Override
     public void start(){
 
-        running = true;
-
-        // deploy all deployable handlers
         // connect to peers in network
         listen(serverHandlers);
         connect(clientHandlers);
 
-        logger.info(String.format("%s is deployed", this.getHost()));
+        logger.debug(String.format("%s is deployed", this.getHost()));
     }
 
 
@@ -147,7 +104,7 @@ public class TCPPeer extends NetPeer{
         this.server.close();
         this.client.close();
 
-        logger.info(String.format("%s is undeployed", this.getHost()));
+        logger.debug(String.format("%s is undeployed", this.getHost()));
     }
 
     /**
@@ -155,7 +112,6 @@ public class TCPPeer extends NetPeer{
      * @param action - json action to transmit
      * @return - ACK/NACK action object
      */
-
     public void broadcastAction(JsonObject action) {
         logger.info(String.format("broadcasting to all peers %s",action.toString()));
         for (String peerName: peers.keySet()){

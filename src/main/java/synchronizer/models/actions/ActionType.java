@@ -1,28 +1,33 @@
 package synchronizer.models.actions;
 
-import org.omg.CORBA.UNKNOWN;
-
 public enum ActionType {
     ACK, // acknowledgement
     NACK, // negative acknowledgement
     CREATE,
     DELETE,
     MODIFY,
-    REQUEST, // request sending file
+    REQUEST, // request file
+    RESPONSE, // response with a file
     UNKNOWN;
-    public static ActionType getType(String action){
-        if (action==null){
+    public static ActionType getType(String type){
+        if (type==null || type.equals("")){
             return ActionType.UNKNOWN;
         }
-        switch(action){
+        switch(type){
             case "ACK":
                 return ActionType.ACK;
+            case "NACK":
+                return ActionType.NACK;
             case "CREATE":
                 return ActionType.CREATE;
             case "DELETE":
                     return ActionType.DELETE;
             case "MODIFY":
                 return ActionType.MODIFY;
+            case "REQUEST":
+                return ActionType.REQUEST;
+            case "RESPONSE":
+                return ActionType.RESPONSE;
                 default:
                     return ActionType.UNKNOWN; // unknown action type
         }

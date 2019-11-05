@@ -3,7 +3,6 @@ package synchronizer.models.actions;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 
-import java.io.File;
 import java.nio.file.Path;
 
 // represents a delete acition
@@ -27,9 +26,21 @@ public class DeleteAction extends Action {
     }
 
 
+    /**
+     *     {
+     *       "type": "DELETE",
+     *       "path": "/opt/dir/newFile.txt",
+     *       "timestamp": 1572730328
+     *     }
+     * @return
+     */
     @Override
     public String toJson() {
-        return new JsonObject().put("type","DELETE").put("path",this.fileToDelete.toString()).put("timestamp",this.unixTime).toString();
+        return new JsonObject()
+                .put("type","DELETE")
+                .put("path",this.fileToDelete.toString())
+                .put("timestamp",this.unixTime)
+                .toString();
     }
 
 }

@@ -1,21 +1,13 @@
 package synchronizer.app;
 
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Verticle;
-import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.EventBus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.exceptions.PathNotDirectory;
 import synchronizer.exceptions.PathNotFound;
 import synchronizer.models.EventBusAddress;
 import synchronizer.models.SharedDataMapAddress;
-
-import synchronizer.tasks.Task;
 import synchronizer.verticles.storage.ActionReceiverVerticle;
 import synchronizer.verticles.storage.ActionSenderVerticle;
-import synchronizer.verticles.storage.LocalFileSystemWalkerVerticle;
 import synchronizer.verticles.storage.SyncVerticle;
 
 import java.io.File;
@@ -64,10 +56,10 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
 //            vertx.deployVerticle(new LocalFileSystemWalkerVerticle(path));
 //        });
 
-        // run maps sync verticle every 10 seconds
-//        vertx.setPeriodic(10000, v->{
-//            vertx.deployVerticle(new SyncVerticle(new SharedDataMapAddress("global.path"), new SharedDataMapAddress("local.map")));
-//        });
+         // run maps sync verticle every 5 seconds
+        vertx.setPeriodic(5000, v->{
+            vertx.deployVerticle(new SyncVerticle(this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("global.path"), new SharedDataMapAddress("local.map")));
+        });
 
     }
 

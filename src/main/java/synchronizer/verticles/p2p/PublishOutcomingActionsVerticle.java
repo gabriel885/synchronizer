@@ -9,9 +9,7 @@ import org.apache.logging.log4j.Logger;
 import synchronizer.models.EventBusAddress;
 import synchronizer.models.File;
 import synchronizer.models.actions.Ack;
-import synchronizer.models.actions.Action;
 import synchronizer.models.actions.ActionType;
-import synchronizer.models.actions.Nack;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -67,27 +65,32 @@ public class PublishOutcomingActionsVerticle extends AbstractVerticle {
             switch (actionType){
                 case DELETE:
                     //event.result().write(new DeleteAction());
-                    logger.info("broadcasting delete action to all peers");
+                    logger.debug("broadcasting delete action");
                     action = actionReceived.body();
                     // broadcast only relative path!!
                     tcpPeer.broadcastAction(relativizePath(action));
                     break;
                 case CREATE:
-                    logger.info("sending file to all peers");
-                    //tcpPeer.sendFile(actionReceived.body());
+                    logger.debug("broadcasting create action");
                     action = actionReceived.body();
                     // broadcast only relative path!!
                     tcpPeer.broadcastAction(relativizePath(action));
-                    tcpPeer.sendFile(Paths.get(f.getFileName()));
+                    //tcpPeer.sendFile(Paths.get(f.getFileName()));
                     break;
                 case MODIFY:
-                    logger.info("sending delete file action and sending file agaiin");
+                    logger.debug("broadcasting modify action");
                     action = actionReceived.body();
                     // broadcast only relative path!!
                     tcpPeer.broadcastAction(relativizePath(action));
                     break;
+                case REQUEST:
+                    logger.debug("broadcasting request action");
+                    action = actionReceived.body();
+                    // broadcast only relative path!!
+                    tcpPeer.broadcastAction(relativizePath(action));
+
                 default:
-                    logger.warn(String.format("%s received unknown action type from message: %s",this.tcpPeer.getHost(),actionReceived.toString()));
+                    logger.warn(String.format("%s received unknown action type from message: %s",this.tcpPeer.getHost(),actionReceived.body().toString()));
                     break;
             }
         });

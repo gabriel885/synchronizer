@@ -1,22 +1,19 @@
 package synchronizer.verticles.p2p;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetSocket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import sun.nio.ch.Net;
 import synchronizer.models.EventBusAddress;
 import synchronizer.models.File;
-import synchronizer.models.actions.Action;
 import synchronizer.models.actions.ActionType;
-import synchronizer.models.actions.Nack;
-import synchronizer.models.actions.RequestAction;
-import synchronizer.models.diff.Checksum;
+import synchronizer.models.actions.ResponseAction;
 
-import java.nio.Buffer;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 // listen for server socket actions
@@ -27,6 +24,9 @@ public class ApplyIncomingActionsVerticle extends AbstractVerticle {
     // logger
     private static final Logger logger = LogManager.getLogger(ApplyIncomingActionsVerticle.class);
 
+    // monitorable path
+    private Path path;
+
     // consume file system actions from event bus
     private MessageProducer<JsonObject> producer;
 
@@ -36,13 +36,21 @@ public class ApplyIncomingActionsVerticle extends AbstractVerticle {
     // event bus address to publish incoming actions
     private EventBusAddress incomingAddress;
 
+    // max number of retries sending to the event bus
+    private int MAX_RETRY=5;
+
+    // attempts made sending to the event bus
+    private int attempts=0;
+
     // peer the actions are coming from
     private TCPPeer tcpPeer;
 
+
     // event bus address to publish to
-    public ApplyIncomingActionsVerticle(TCPPeer tcpPeer, EventBusAddress incomingAddress) {
+    public ApplyIncomingActionsVerticle(Path path,TCPPeer tcpPeer, EventBusAddress incomingAddress) {
         this.incomingAddress = incomingAddress;
         this.tcpPeer = tcpPeer;
+        this.path = path;
     }
 
     @Override
@@ -50,6 +58,8 @@ public class ApplyIncomingActionsVerticle extends AbstractVerticle {
         this.eb = vertx.eventBus();
         // connect consumer
         this.producer = eb.publisher(incomingAddress.toString());
+
+//        this.tcpPeer.listen(new ReceiveActionHandler(this.path,vertx.fileSystem(),this.producer));
 
         // receive actions handler and produce to event bus
         this.tcpPeer.listen(handler->{
@@ -62,42 +72,51 @@ public class ApplyIncomingActionsVerticle extends AbstractVerticle {
                     // confirm message
                     JsonObject actionReceived =  buffer.toJsonObject();
 
-                    // validate incoming json response
-                    if (!Action.valid(actionReceived)){
-                        logger.warn(String.format("Received unknown action %s from %s", buffer.toString(),socket.remoteAddress()));
-                        socket.write(new Nack().bufferize());
-                        return;
-                    }
+
+//                    // validate incoming json response
+//                    if (!Action.valid(actionReceived)){
+//                        logger.warn(String.format("Received unknown action %s from %s", buffer.toString(),socket.remoteAddress()));
+//                        socket.write(new Nack().bufferize());
+//                        return;
+//                    }
+
+                    // Append action's path to relative monitorable path
+                    actionReceived = absolutizePath(actionReceived);
+
 
                     ActionType actionType = ActionType.getType(actionReceived.getString("type"));
 
                     File f = new File(actionReceived);
-                    switch(actionType){
-                        case CREATE:
-                            // broadcast request action
-                            this.tcpPeer.broadcastAction(new RequestAction(Paths.get(f.getFileName())));
-                        case MODIFY: // request modification and pass to event bus
-                            // this.tcpPeer.requestModification(Checksum.
-                            // String oldChecksum = Checksum.checksum(Paths.get(f.getFileName()));
-                            // this.tcpPeer.requestModification(f.getFileName(),oldChecksum);
-                        case REQUEST: //
-                            socket.sendFile(f.getFileName());
-                            return;
-                    }
 
+                    switch(actionType){
+                        case REQUEST:
+                            // send response
+                            Buffer requestedBuffer = vertx.fileSystem().readFileBlocking(f.getFileName());
+                            JsonObject actionResponse = new JsonObject(new ResponseAction(Paths.get(f.getFileName()),requestedBuffer).toJson());
+                            socket.write(actionResponse.toBuffer());
+                            logger.info(String.format("Sent response %s  %s", actionResponse.toString(),socket.remoteAddress()));
+                            return;
+                        default:
+                            break;
+                    }
                     this.producer.send(actionReceived);
                 });
             }
         });
-//        // receive file buffers
-//        this.tcpPeer.listen(handler->{
-//           if (handler instanceof NetSocket){
-//               NetSocket socket = (NetSocket) handler; // will fail on runtime if handler is not a net socket
-//               socket.handler(buffer->{
-//                   logger.info(buffer);
-//               });
-//           }
-//        });
+    }
+    /**
+     * searches for "path" key in json object and strips absolute path from monitorable path
+     * @param action
+     * @return
+     */
+    private JsonObject absolutizePath(JsonObject action){
+        if (action==null || !action.containsKey("path")){
+            return null;
+        }
+        String relativeFile = action.getString("path");
+        Path absoluteFile = Paths.get(this.path.toString(),relativeFile);
+        action.put("path",absoluteFile.toString());
+        return action;
     }
 
     @Override

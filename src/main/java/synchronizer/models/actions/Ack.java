@@ -2,7 +2,6 @@ package synchronizer.models.actions;
 
 
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.json.Json;
 
 // acknowledgement action
 public class Ack extends Action {

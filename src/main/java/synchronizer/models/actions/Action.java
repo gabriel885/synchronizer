@@ -1,7 +1,6 @@
 package synchronizer.models.actions;
 
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -26,27 +25,30 @@ public abstract class Action extends JsonObject {
     public abstract String toJson();
 
     /**
-     * return true if action is valid
+     * return true if action is valid - contains valid json scheme according to action type
      * @param jsonAction
      * @return
      */
     public static boolean valid(JsonObject jsonAction){
         if (ActionType.isValidType(jsonAction.getString("type")) && jsonAction.containsKey("path") && jsonAction.containsKey("timestamp")){
-            switch(ActionType.getType(jsonAction.toString())){
-                case DELETE: return true;
+            switch(ActionType.getType(jsonAction.getString("type"))){
+                case DELETE:
+                    return true;
                 case MODIFY:
-                    if (!jsonAction.containsKey("checksum")){
+                    if (!jsonAction.containsKey("checksum") || !jsonAction.containsKey("buffer")){
                         return false;
                     }
+                    return true;
                 case CREATE:
-                    if (!jsonAction.containsKey("checksum")){
-                        return true;
+                    if (!jsonAction.containsKey("checksum") || !jsonAction.containsKey("buffer")){
+                        return false;
                     }
-                case UNKNOWN: return false;
-                case REQUEST: return true;
-                case ACK: return true;
+                    return true;
+                case UNKNOWN:
+                    return false;
+                default: // ACK NACK REQUEST RESPONSE
+                    return true;
             }
-            return true;
         }else{
             return false;
         }

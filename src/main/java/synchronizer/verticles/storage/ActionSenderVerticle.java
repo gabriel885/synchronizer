@@ -2,28 +2,28 @@ package synchronizer.verticles.storage;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageProducer;
-import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
-
-import io.vertx.core.net.SocketAddress;
 import io.vertx.core.shareddata.LocalMap;
 import org.apache.commons.io.monitor.FileAlterationListener;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import synchronizer.models.*;
+import synchronizer.models.EventBusAddress;
+import synchronizer.models.SharedDataMapAddress;
 import synchronizer.models.actions.CreateAction;
 import synchronizer.models.actions.DeleteAction;
 import synchronizer.models.actions.ModifyAction;
+import synchronizer.models.diff.Checksum;
 
 import java.io.File;
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 
 
 // ActionSenderVerticle watch for local file system alternations.
@@ -115,7 +115,8 @@ public class ActionSenderVerticle extends AbstractVerticle {
             @Override
             public void onFileCreate(File file)  {
                 // create action object and publish it to the event bus
-                actionObject = new JsonObject(new CreateAction(file.toPath()).toJson());
+                Buffer fileBuffer = vertx.fileSystem().readFileBlocking(file.toPath().toString());
+                actionObject = new JsonObject(new CreateAction(file.toPath(), fileBuffer).toJson());
                 publish(actionObject);
                 // update local map
                 updateMap(file.getName(),new synchronizer.models.File(actionObject));
@@ -123,7 +124,8 @@ public class ActionSenderVerticle extends AbstractVerticle {
 
             @Override
             public void onFileChange(File file) {
-                actionObject = new JsonObject(new ModifyAction(file.toPath()).toJson());
+                Buffer modifiedBuffer = vertx.fileSystem().readFileBlocking(file.toPath().toString());
+                actionObject = new JsonObject(new ModifyAction(file.toPath(), modifiedBuffer).toJson());
                 publish(actionObject);
                 // update local map
                 updateMap(file.getName(),new synchronizer.models.File(actionObject));
@@ -139,18 +141,73 @@ public class ActionSenderVerticle extends AbstractVerticle {
 
             @Override
             public void onDirectoryCreate(File dir) {
-                actionObject = new JsonObject(new CreateAction(dir.toPath()).toJson());
+                List<String> newFiles = vertx.fileSystem().readDirBlocking(dir.toPath().toString());
+
+                // create the directory itself first
+                actionObject = new JsonObject(new CreateAction(dir.toPath(), Buffer.buffer()).toJson());
                 publish(actionObject);
-                // update local map
-                updateMap(dir.getName(),new synchronizer.models.File(actionObject));
+
+                // create all files inside created dir
+                for (String fileName : newFiles){
+                    Buffer newFileBuffer = vertx.fileSystem().readFileBlocking(fileName);
+                    actionObject = new JsonObject(new CreateAction(Paths.get(fileName), newFileBuffer).toJson());
+                    publish(actionObject);
+                    // update local map
+                    updateMap(dir.getName(),new synchronizer.models.File(actionObject));
+                }
+
             }
 
             @Override
             public void onDirectoryChange(File dir) {
-                actionObject = new JsonObject(new ModifyAction(dir.toPath()).toJson());
+                List<String> newFiles = vertx.fileSystem().readDirBlocking(dir.toPath().toString());
+
+                // modify directory first
+                actionObject = new JsonObject(new CreateAction(dir.toPath(), Buffer.buffer()).toJson());
                 publish(actionObject);
-                // update local map
-                updateMap(dir.getName(),new synchronizer.models.File(actionObject));
+
+                // modify files inside modified files inside dir
+                for (String fileName: newFiles){
+                    // calculate checksum of all files
+                    // if checksum differs from origin checksum - send modify action on that particular file
+                    String newFileChecksum = Checksum.checksum(Paths.get(fileName));
+
+                    // check if file in dir exists
+                    if (vertx.fileSystem().existsBlocking(fileName)){
+                        // check if file exists in local map
+                        // if file is not in local map, send create action
+                        if (ActionSenderVerticle.this.localMap.get(fileName) != null){
+                            if (ActionSenderVerticle.this.localMap.get(fileName).getChecksum()!=null){
+                                String originFileChecksum = ActionSenderVerticle.this.localMap.get(fileName).getChecksum();
+                                if (!Checksum.equals(newFileChecksum, originFileChecksum)) {
+                                    // checksums and inequal - send modify action
+                                    Buffer modifiedBuffer = vertx.fileSystem().readFileBlocking(fileName);
+                                    actionObject = new JsonObject(new ModifyAction(Paths.get(fileName),modifiedBuffer).toJson());
+                                    publish(actionObject);
+                                    // update local path
+                                    updateMap(dir.getName(),new synchronizer.models.File(actionObject));
+                                    return;
+                                }
+                                else{
+                                    // file is untouched! checksums are equal
+                                    return;
+                                }
+                            }
+                            else{
+                                // file does not exist in local path map
+                            }
+                        }
+                        else{
+                            // file does not exist in local path map
+                        }
+                    }
+                     // file does not exist - send create Action
+                    Buffer newFileBuffer = vertx.fileSystem().readFileBlocking(fileName);
+                    actionObject = new JsonObject(new CreateAction(Paths.get(fileName), newFileBuffer).toJson());
+                    publish(actionObject);
+                    // update local map
+                    updateMap(dir.getName(),new synchronizer.models.File(actionObject));
+                }
             }
 
             @Override

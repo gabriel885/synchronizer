@@ -17,23 +17,15 @@ between multiple computers.
  * SharedData local maps
     * local.path
     * global.path
- * Events
-    * localChangeDetected
-    * remoteChangeDetected
-    * StateChanged
-    * ConfigSaved
-    * DownloadProgress
-    * FolderSummary
-    * FolderWatchStateChanged
-    * FolderScanProgress
-    * DeviceDiscovered
-    * DeviceConnected
-    * DeviceDisconnected
-    * DeviceRejected
-    * DevicePaused
-    * DeviceResumed
-    
-    
+ * Actions
+    * Create - create action
+    * Delete - delete action
+    * Modify - modification action
+    * Ack - acknowledgment
+    * Nack - negative acknowledgement
+    * Request - request a file
+    * Response - response with requested file
+    * Sync - broadcast local path
 ### Design/Functionality
  * Multi Threaded Server Application
     * Storage Application
@@ -84,7 +76,8 @@ docker exec container-name-2 /bin/bash
       "type": "MODIFY",
       "checksum": "edfdcfd4e646fe736caa2825226bf33f",
       "path": "/opt/dir/newFile.txt",
-      "timestamp": 1572730328
+      "timestamp": 1572730328,
+      "buffer" : "this is the modifications that was made in file"
     }  
  ```
 - Create:
@@ -93,14 +86,15 @@ docker exec container-name-2 /bin/bash
       "type": "CREATE",
       "path": "/opt/dir/newFile.txt",
       "checksum": "a063e188310b9cf711b0e251a349afc1",
-      "timestamp": 1572730322
+      "timestamp": 1572730322,
+      "buffer" : "new content is added to new file"
     }    
 ```
 - Delete:
 ```json
     {
       "type": "DELETE",
-      "path": "/opt/dir/.newFile.txt.swp",
+      "path": "/opt/dir/newFile.txt",
       "timestamp": 1572730328
     }
 ```
@@ -108,11 +102,29 @@ docker exec container-name-2 /bin/bash
 ```json
     {
       "type": "REQUEST",
-      "path": "/opt/dir/.newFile.txt.swp",
-      "timestamp": 1572730443
+      "path": "/opt/dir/newFile.txt",
+      "timestamp": 1572740322
     }
-
 ```
+- Response:
+```json
+    {
+      "type": "RESPONSE",
+      "path": "/opt/dir/newFile.txt",
+      "checksum": "f8a6701de14ec3fcfd9f2fe595e9c9ed",
+      "timestamp": 1572740322,
+      "buffer": "this is content of requested file"
+    }
+```
+- Sync: (path structure)
+```json
+    {
+      "type": "SYNC",
+      "timestamp": 1572743222, 
+      "buffer": "{}"
+    }
+```
+
 ### Implementation Guide:
 
 ##### MultiThreadedApplication

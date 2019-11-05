@@ -6,20 +6,19 @@ import org.apache.logging.log4j.Logger;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 // usage : String checksum = Checksum.checksum("/opt/dir/example.txt");
-public abstract class Checksum{
+public interface  Checksum{
 
     // logger
-    private static final Logger logger = LogManager.getLogger(Checksum.class);
+    Logger logger = LogManager.getLogger(Checksum.class);
 
     /**
      * generate checksum of a file
      * @param file
      * @return
      */
-    public static String checksum(Path file){
+    static String checksum(Path file){
         if (file.toFile().isDirectory()){
             return ""; // directory dont have checksum
         }
@@ -42,7 +41,7 @@ public abstract class Checksum{
      * @param checksum2
      * @return
      */
-    public boolean compare(String checksum1, String checksum2){
+    static boolean equals(String checksum1, String checksum2){
         return checksum1.equals(checksum2);
     }
 

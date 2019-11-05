@@ -15,6 +15,6 @@ public class Nack extends Action {
 
     @Override
     public String toJson() {
-        return "{ack}";
+        return "{nack}";
     }
 }
