@@ -44,7 +44,7 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
 
     private final String myHost;
 
-    // p2p application's peers
+    // synchronizer.verticles.p2p application's peers
     private Set<Peer> peers = new HashSet<>();
 
     // tcp peer of current host
@@ -57,7 +57,7 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
 
 
     public P2PApplication(String path,String []devices) throws Exception{
-        // initialise p2p applicaiton stuff
+        // initialise synchronizer.verticles.p2p applicaiton stuff
         this.inetAddress = inetAddress.getLocalHost();
         this.myHost = this.inetAddress.getHostAddress();
 
@@ -82,25 +82,28 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     }
 
     /**
-     * start p2p application
+     * start synchronizer.verticles.p2p application
      * @throws Exception
      */
     @Override
     public void start() throws Exception {
-        vertx.deployVerticle(tcpPeer);
+        // deploy tcp peer
+        vertx.deployVerticle(tcpPeer, handler->{
+            if (handler.succeeded()){
+                // publish local events to all peers
+                vertx.deployVerticle(new PublishOutcomingActionsVerticle(this.path ,this.tcpPeer,new EventBusAddress("outcoming.actions")));
 
-        logger.info(String.format("%s is deployed", this.toString()));
-
-        // publish local events to all peers
-        vertx.deployVerticle(new PublishOutcomingActionsVerticle(this.path ,this.tcpPeer,new EventBusAddress("outcoming.actions")));
-
-        // apply global events locally
-        vertx.deployVerticle(new ApplyIncomingActionsVerticle(this.path,this.tcpPeer,new EventBusAddress("incoming.actions")));
+                // apply global events locally
+                vertx.deployVerticle(new ApplyIncomingActionsVerticle(this.path,this.tcpPeer,new EventBusAddress("incoming.actions")));
+            }else{
+                logger.error(handler.cause());
+            }
+        });
     }
 
 
     /**
-     * kill p2p application gracefully
+     * kill synchronizer.verticles.p2p application gracefully
      */
     @Override
     public void kill() {

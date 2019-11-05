@@ -1,5 +1,5 @@
 import synchronizer.tasks.Task;
-import synchronizer.utils.RandomString;
+import utils.RandomString;
 
 import java.io.File;
 import java.nio.file.Path;

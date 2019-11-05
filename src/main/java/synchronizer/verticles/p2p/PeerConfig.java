@@ -31,7 +31,7 @@ public class PeerConfig {
 
     }
     /**
-     * Name of the peer. It must be unique across the p2p network
+     * Name of the peer. It must be unique across the synchronizer.verticles.p2p network
      */
     private String peerName;
 

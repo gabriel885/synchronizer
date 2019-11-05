@@ -76,6 +76,7 @@ docker exec container-name-2 /bin/bash
       "type": "MODIFY",
       "checksum": "edfdcfd4e646fe736caa2825226bf33f",
       "path": "/opt/dir/newFile.txt",
+      "isDir": false,
       "timestamp": 1572730328,
       "buffer" : "this is the modifications that was made in file"
     }  
@@ -85,6 +86,7 @@ docker exec container-name-2 /bin/bash
     {
       "type": "CREATE",
       "path": "/opt/dir/newFile.txt",
+      "isDir": false,
       "checksum": "a063e188310b9cf711b0e251a349afc1",
       "timestamp": 1572730322,
       "buffer" : "new content is added to new file"
@@ -146,7 +148,7 @@ docker exec container-name-2 /bin/bash
         app.scheduleStachosticTask(new Task(){
             @Override
             public void run(){
-                System.out.println("storage applicaiton runs stachostic task!");
+                System.out.println("synchronizer.verticles.storage applicaiton runs stachostic task!");
             }
         });
         ```
@@ -155,13 +157,13 @@ docker exec container-name-2 /bin/bash
          app.scheduleSequentTask(new Task() {
             @Override
             public void run() {
-                System.out.println("storage application executed sequent task #1");
+                System.out.println("synchronizer.verticles.storage application executed sequent task #1");
             }
          });
          app.scheduleSequentTask(new Task() {
              @Override
              public void run() {
-                System.out.println("storage application executed sequent task #2");
+                System.out.println("synchronizer.verticles.storage application executed sequent task #2");
              }
          });
         ```

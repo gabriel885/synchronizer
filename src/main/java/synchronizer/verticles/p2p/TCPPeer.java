@@ -87,6 +87,7 @@ public class TCPPeer extends NetPeer implements Protocol{
         super(hostname, port, peers, clientOptions, serverOptions);
     }
 
+    // TODO: add promise - if something failed re-try on synchronizer.verticles.p2p application leve
     @Override
     public void start(){
 

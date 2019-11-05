@@ -1,6 +1,7 @@
 package synchronizer.verticles.storage;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,20 +27,29 @@ public class DeleteFileVerticle extends AbstractVerticle {
     }
 
     @Override
-    public void start(){
+    public void start(Future<Void> startFuture){
         if (fileToDelete == null || fileToDelete.isEmpty()){
             logger.warn(String.format("received invalid file to delete %s", fileToDelete));
+            startFuture.fail(String.format("received invalid file to delete %s", fileToDelete));
             return;
         }
         // Check existence and delete
         vertx.fileSystem().exists(fileToDelete, result -> {
-            if (result.succeeded() && result.result()) {
-                vertx.fileSystem().deleteBlocking(fileToDelete);
-                logger.info(String.format("deleted file %s", fileToDelete));
-            } else {
-                // ignore deletion because file already don't exist
+            if (result.succeeded()) {
+                if (result.result()){ // if file exists delete it
+                    vertx.fileSystem().deleteBlocking(fileToDelete);
+                    logger.info(String.format("deleted file %s", fileToDelete));
+                }
+                else{
+                    logger.info(String.format("file %s already deleted", fileToDelete));
+                }
+                startFuture.complete();
+            }
+            else{
+                startFuture.fail(result.cause());
             }
         });
+
     }
 
     @Override

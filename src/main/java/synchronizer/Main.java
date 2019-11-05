@@ -12,10 +12,10 @@ public class Main {
     // logger
     private static final Logger logger = LogManager.getLogger(Main.class);
 
-    // storage application
+    // synchronizer.verticles.storage application
     static StorageApplication storageApplication;
 
-    // p2p application
+    // synchronizer.verticles.p2p application
     static P2PApplication p2pApplication;
 
     public static void main(String [] args){
@@ -26,12 +26,12 @@ public class Main {
         CommandLine cmd = parser.parse(args);
 
         try{
-            // storage application
+            // synchronizer.verticles.storage application
             storageApplication = new StorageApplication(cmd.getOptionValue("path"));
             storageApplication.start();
 
 
-            // p2p application
+            // synchronizer.verticles.p2p application
             p2pApplication = new P2PApplication(cmd.getOptionValue("path"),cmd.getOptionValues("devices"));
             p2pApplication.start();
 

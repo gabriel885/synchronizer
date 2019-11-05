@@ -14,6 +14,9 @@ public class CreateAction extends Action {
     // local file created
     private Path fileToCreate;
 
+    // true if tile is a dir
+    private boolean isDir;
+
     // file buffer
     private Buffer fileBuffer;
 
@@ -24,9 +27,10 @@ public class CreateAction extends Action {
     private long unixTime;
 
 
-    public CreateAction(Path fileToCreate, Buffer fileBuffer) {
+    public CreateAction(Path fileToCreate, boolean isDir, Buffer fileBuffer) {
         super(ActionType.CREATE);
         this.fileToCreate = fileToCreate;
+        this.isDir = isDir;
         this.checksum = Checksum.checksum(fileToCreate);
         this.unixTime = System.currentTimeMillis() / 1000L;
         this.fileBuffer = fileBuffer;
@@ -70,6 +74,7 @@ public class CreateAction extends Action {
      *     {
      *       "type": "CREATE",
      *       "path": "/opt/dir/newFile.txt",
+     *       "isDir": false,
      *       "checksum": "a063e188310b9cf711b0e251a349afc1",
      *       "timestamp": 1572730322,
      *       "buffer" : "new content is added to new file"
@@ -83,6 +88,7 @@ public class CreateAction extends Action {
                 .put("path",this.fileToCreate.toString())
                 .put("checksum",this.checksum)
                 .put("timestamp",this.unixTime)
+                .put("isDir", this.isDir)
                 .put("buffer",this.fileBuffer.toString())
                 .toString();
     }

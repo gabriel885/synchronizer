@@ -2,7 +2,7 @@ package synchronizer.verticles.p2p;
 
 import io.vertx.core.json.JsonObject;
 
-// p2p file sync protocol
+// synchronizer.verticles.p2p file sync protocol
 public interface Protocol {
 
 

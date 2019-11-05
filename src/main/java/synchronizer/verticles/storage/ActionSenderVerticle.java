@@ -116,7 +116,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
             public void onFileCreate(File file)  {
                 // create action object and publish it to the event bus
                 Buffer fileBuffer = vertx.fileSystem().readFileBlocking(file.toPath().toString());
-                actionObject = new JsonObject(new CreateAction(file.toPath(), fileBuffer).toJson());
+                actionObject = new JsonObject(new CreateAction(file.toPath(), false, fileBuffer).toJson());
                 publish(actionObject);
                 // update local map
                 updateMap(file.getName(),new synchronizer.models.File(actionObject));
@@ -144,13 +144,13 @@ public class ActionSenderVerticle extends AbstractVerticle {
                 List<String> newFiles = vertx.fileSystem().readDirBlocking(dir.toPath().toString());
 
                 // create the directory itself first
-                actionObject = new JsonObject(new CreateAction(dir.toPath(), Buffer.buffer()).toJson());
+                actionObject = new JsonObject(new CreateAction(dir.toPath(), true, Buffer.buffer()).toJson());
                 publish(actionObject);
 
                 // create all files inside created dir
                 for (String fileName : newFiles){
                     Buffer newFileBuffer = vertx.fileSystem().readFileBlocking(fileName);
-                    actionObject = new JsonObject(new CreateAction(Paths.get(fileName), newFileBuffer).toJson());
+                    actionObject = new JsonObject(new CreateAction(Paths.get(fileName), true, newFileBuffer).toJson());
                     publish(actionObject);
                     // update local map
                     updateMap(dir.getName(),new synchronizer.models.File(actionObject));
@@ -163,7 +163,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
                 List<String> newFiles = vertx.fileSystem().readDirBlocking(dir.toPath().toString());
 
                 // modify directory first
-                actionObject = new JsonObject(new CreateAction(dir.toPath(), Buffer.buffer()).toJson());
+                actionObject = new JsonObject(new CreateAction(dir.toPath(), true, Buffer.buffer()).toJson());
                 publish(actionObject);
 
                 // modify files inside modified files inside dir
@@ -203,7 +203,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
                     }
                      // file does not exist - send create Action
                     Buffer newFileBuffer = vertx.fileSystem().readFileBlocking(fileName);
-                    actionObject = new JsonObject(new CreateAction(Paths.get(fileName), newFileBuffer).toJson());
+                    actionObject = new JsonObject(new CreateAction(Paths.get(fileName), true, newFileBuffer).toJson());
                     publish(actionObject);
                     // update local map
                     updateMap(dir.getName(),new synchronizer.models.File(actionObject));

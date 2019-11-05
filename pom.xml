@@ -15,6 +15,7 @@
     <packaging>jar</packaging>
 
     <properties>
+        <junit-jupiter.version>5.5.0</junit-jupiter.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <jdk.version>1.8</jdk.version>
@@ -36,6 +37,15 @@
             <version>5.5.2</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.5.0</version>
+            <scope>test</scope>
+        </dependency>
+
 
         <!-- apache commons-io -->
         <dependency>
@@ -66,10 +76,7 @@
         </dependency>
 
 
-
-
         <!-- logs -->
-
         <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -80,6 +87,12 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
             <version>2.12.1</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>RELEASE</version>
+            <scope>compile</scope>
         </dependency>
 
     </dependencies>
@@ -139,7 +152,12 @@
                     </execution>
                 </executions>
             </plugin>
-
+            <!-- plugin to make junit5 work under maven -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.0</version>
+            </plugin>
         </plugins>
     </build>
 

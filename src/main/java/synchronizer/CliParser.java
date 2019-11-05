@@ -27,8 +27,8 @@ public class CliParser {
     // path option
     Option pathCliOption = new Option("p","path", true, "path to synchronize with peers. example: /opt/dir");
 
-    // devices option (peers to connect the p2p network)
-    Option devicesCliOption = new Option("d","devices", true,"devices with port to connect the p2p network. examples: 10.0.0.1:4321, 10.0.0.2:2020 10.0.0.0.5:2020. NOTE: port is set to default to 2020");
+    // devices option (peers to connect the synchronizer.verticles.p2p network)
+    Option devicesCliOption = new Option("d","devices", true,"devices with port to connect the synchronizer.verticles.p2p network. examples: 10.0.0.1:4321, 10.0.0.2:2020 10.0.0.0.5:2020. NOTE: port is set to default to 2020");
 
 
     //String [] devices = cmd.getOptionValues("devices");
@@ -43,7 +43,7 @@ public class CliParser {
 
         // devices options
         this.devicesCliOption.setRequired(true); // peers to connect the network (must be set)
-        this.devicesCliOption.setArgs(this.devicesCliOption.UNLIMITED_VALUES); // unlimited number of devices in p2p network
+        this.devicesCliOption.setArgs(this.devicesCliOption.UNLIMITED_VALUES); // unlimited number of devices in synchronizer.verticles.p2p network
 
         // add options to parser
         this.cliOptions.addOption(pathCliOption);
