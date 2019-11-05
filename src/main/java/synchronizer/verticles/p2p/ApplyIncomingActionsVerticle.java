@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.models.EventBusAddress;
 import synchronizer.models.File;
+import synchronizer.models.actions.Ack;
 import synchronizer.models.actions.ActionType;
 import synchronizer.models.actions.ResponseAction;
 
@@ -68,7 +69,7 @@ public class ApplyIncomingActionsVerticle extends AbstractVerticle {
 
                 socket.handler(buffer->{
                     logger.info(String.format("received buffer %s from %s", buffer.toString(),socket.remoteAddress()));
-
+                    socket.write(new Ack().bufferize());
                     // confirm message
                     JsonObject actionReceived =  buffer.toJsonObject();
 

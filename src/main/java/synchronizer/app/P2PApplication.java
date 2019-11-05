@@ -88,15 +88,14 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     @Override
     public void start() throws Exception {
         // deploy tcp peer
-        vertx.deployVerticle(tcpPeer, handler->{
-            if (handler.succeeded()){
+        vertx.deployVerticle(tcpPeer, deployResult->{
+            if (deployResult.succeeded()){
                 // publish local events to all peers
                 vertx.deployVerticle(new PublishOutcomingActionsVerticle(this.path ,this.tcpPeer,new EventBusAddress("outcoming.actions")));
-
                 // apply global events locally
-                vertx.deployVerticle(new ApplyIncomingActionsVerticle(this.path,this.tcpPeer,new EventBusAddress("incoming.actions")));
+                vertx.deployVerticle(new ApplyIncomingActionsVerticle(this.path ,this.tcpPeer,new EventBusAddress("incoming.actions")));
             }else{
-                logger.error(handler.cause());
+                logger.error(deployResult.cause());
             }
         });
     }

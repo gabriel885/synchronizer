@@ -95,7 +95,7 @@ public class TCPPeer extends NetPeer implements Protocol{
         listen(serverHandlers);
         connect(clientHandlers);
 
-        logger.debug(String.format("%s is deployed", this.getHost()));
+        logger.info(String.format("%s is deployed", this.getHost()));
     }
 
 

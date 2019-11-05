@@ -75,7 +75,7 @@ public class SyncVerticle extends AbstractVerticle {
                 logger.info(String.format("Found file %s that does not exists locally. Requesting file...",entry.getKey()));
                 JsonObject actionObject = new JsonObject(new RequestAction(entry.getKey().toString()).toJson());
                 // send request action to event bus
-                //this.producer.send(actionObject);
+                this.producer.send(actionObject);
             }
             else{
 
