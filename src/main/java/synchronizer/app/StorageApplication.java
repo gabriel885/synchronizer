@@ -35,9 +35,6 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
         this.path = dirPath.toPath();
     }
 
-
-    // TODO: maybe return a future that indicated succeeded termination?
-    // TODO: this future will be "waited" in Main thread
     /**
      * start storage application
      * @throws Exception
@@ -51,15 +48,11 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
 
         vertx.deployVerticle(new ActionSenderVerticle(this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("local.path")));
 
-        // run local scan every 25 seconds
-//        vertx.setPeriodic(25000, v->{
-//            vertx.deployVerticle(new LocalFileSystemWalkerVerticle(path));
-//        });
-
          // run maps sync verticle every 5 seconds
         vertx.setPeriodic(5000, v->{
             vertx.deployVerticle(new SyncVerticle(this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("global.path"), new SharedDataMapAddress("local.map")));
         });
+
 
     }
 

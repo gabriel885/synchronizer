@@ -13,6 +13,7 @@ import synchronizer.models.EventBusAddress;
 import synchronizer.models.File;
 import synchronizer.models.SharedDataMapAddress;
 import synchronizer.models.actions.RequestAction;
+import synchronizer.models.diff.Checksum;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -69,11 +70,15 @@ public class SyncVerticle extends AbstractVerticle {
         // compare map keys and file last modification
         for (Map.Entry entry : globalMap.entrySet()){
             // check that key exists
-            if (!localMap.containsKey(entry.getKey())){
+            // or if the checksums of the files differ
+            if (!localMap.containsKey(entry.getKey()) || !Checksum.equals(localMap.get(entry).getChecksum(), globalMap.get(entry).getChecksum())){
                 logger.info(String.format("Found file %s that does not exists locally. Requesting file...",entry.getKey()));
                 JsonObject actionObject = new JsonObject(new RequestAction(entry.getKey().toString()).toJson());
                 // send request action to event bus
                 //this.producer.send(actionObject);
+            }
+            else{
+
             }
         }
     }
