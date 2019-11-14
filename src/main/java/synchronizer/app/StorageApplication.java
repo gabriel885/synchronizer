@@ -47,7 +47,7 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
         vertx.deployVerticle(new ActionSenderVerticle(myIpAddress,this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("local.path")), deployResult1->{
             if (deployResult1.succeeded()){
                 // deploy all synchronizer.verticles.storage application verticles
-                vertx.deployVerticle(new ActionReceiverVerticle(myIpAddress,this.path, new EventBusAddress("incoming.actions"), new SharedDataMapAddress("global.path")), deployResult2->{
+                vertx.deployVerticle(new ActionReceiverVerticle(myIpAddress, this.path, new EventBusAddress("incoming.actions"), new SharedDataMapAddress("local.path")), deployResult2 -> {
                     if (deployResult2.succeeded()){
                         // run maps sync verticle every 5 seconds
                         vertx.setPeriodic(5000, v->{

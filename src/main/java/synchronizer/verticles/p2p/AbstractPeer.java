@@ -1,6 +1,6 @@
 package synchronizer.verticles.p2p;
 
-import io.vertx.core.*;
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
@@ -19,7 +19,6 @@ public abstract class AbstractPeer extends AbstractVerticle{
     private static final Logger logger = LogManager.getLogger(AbstractPeer.class);
 
 
-    // TODO: WHAT TO DO WITH THIS??
     // InetAddress
     protected InetSocketAddress inetSocketAddress;
 

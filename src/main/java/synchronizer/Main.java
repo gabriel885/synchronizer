@@ -1,6 +1,6 @@
 package synchronizer;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.app.P2PApplication;
@@ -40,12 +40,6 @@ public class Main {
             storageApplication.kill();
             p2pApplication.kill();
         }
-
-        // TODO: erase utils package
-        // TODO: create local map of files
-        // TODO: docker run (pass arguments to java .jar inside container)
-        // TODO: run java program and shell inside a container
-        // TODO:
 
     }
 }
