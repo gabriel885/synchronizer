@@ -1,6 +1,7 @@
 package synchronizer.verticles.storage;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
@@ -10,10 +11,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.models.EventBusAddress;
 import synchronizer.models.SharedDataMapAddress;
+import synchronizer.models.actions.SyncAction;
 
+import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.nio.file.Paths;
+import java.util.List;
 
 // responsible for comparing between global path structure and local path structure
 // to detect conflicts, adopt global path - request missing files and make local changes.
@@ -30,8 +33,6 @@ public class SyncVerticle extends AbstractVerticle {
 
     // shared data local map
     private SharedData sd;
-
-    private Deque<Long> timestampStack = new ArrayDeque<Long>();
 
     // local maps addresses
     private SharedDataMapAddress localMapName, globalMapName;
@@ -56,9 +57,6 @@ public class SyncVerticle extends AbstractVerticle {
     @Override
     public void start() {
 
-        vertx.deployVerticle(new MyVerticle());
-
-        logger.info("sync verticle deployed!");
         // shared data
         this.sd = vertx.sharedData();
         // event bus
@@ -70,23 +68,22 @@ public class SyncVerticle extends AbstractVerticle {
         LocalMap<String, JsonObject> localMap = this.sd.getLocalMap(localMapName.toString());
         LocalMap<String, JsonObject> globalMap = this.sd.getLocalMap(globalMapName.toString());
 
-        // compare map keys and file last modification
-//        for (Map.Entry entry : globalMap.entrySet()){
-//            // check that key exists
-//            // or if the checksums of the files differ
-//            if (!localMap.containsKey(entry.getKey()) || !Checksum.equals(localMap.get(entry).getChecksum(), globalMap.get(entry).getChecksum())){
-//                logger.info(String.format("Found file %s that does not exists locally. Requesting file...",entry.getKey()));
-//                JsonObject actionObject = new JsonObject(new RequestAction(entry.getKey().toString()).toJson());
-//                // send request action to event bus
-//                this.producer.send(actionObject);
-//            }
-//            else{
-//
-//            }
-//        }
+        // send local directrory
+        vertx.fileSystem().readDir(this.path.toString(), handler->{
+            if (handler.succeeded()){
+                List<String> files = handler.result();
+                Buffer bufferFiles = Buffer.buffer();
+                for (String fileName: files){
+                    File file = new File(fileName);
+                    boolean isDir = file.isDirectory();
+                    //bufferFiles.appendString(new JsonObject().put("path",fileName).put("checksum", Checksum.checksum(file.toPath())).put("isDir",isDir).toString());
+                    // broadcast file
+                    this.producer.send(new JsonObject(new SyncAction(Paths.get(fileName),isDir).toJson()));
+                }
 
-        logger.info("local map:");
-        logger.info(localMap.keySet());
+            }
+        });
+
     }
 
     @Override

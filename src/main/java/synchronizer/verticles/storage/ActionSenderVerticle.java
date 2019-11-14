@@ -60,6 +60,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
     // local map address to log local alternations
     private SharedDataMapAddress localMapAddress;
 
+
     // interval scanning for local file system alternations
     private final int  MONITOR_INTERVAL = 400; // milliseconds
 
@@ -177,8 +178,12 @@ public class ActionSenderVerticle extends AbstractVerticle {
                     if (!validAction(new File(fileName))){
                         continue;
                     }
-                    Buffer newFileBuffer = vertx.fileSystem().readFileBlocking(fileName);
-                    actionObject = new JsonObject(new CreateAction(Paths.get(fileName), false, newFileBuffer).toJson());
+                    if (!(new File(fileName).isDirectory())){
+                        Buffer newFileBuffer = vertx.fileSystem().readFileBlocking(fileName);
+                        actionObject = new JsonObject(new CreateAction(Paths.get(fileName), false, newFileBuffer).toJson());
+                    }else{
+                        actionObject = new JsonObject(new CreateAction(Paths.get(fileName), true, Buffer.buffer()).toJson());
+                    }
                     publish(actionObject);
                 }
             }

@@ -21,25 +21,21 @@ public class SendActionHandler implements ActionHandler<AsyncResult<NetSocket>> 
     @Override
     public void handle(AsyncResult<NetSocket> event) {
         if (event.succeeded()){ // connection succeded
-            logger.info(String.format("writing event %s to socket", this.action.toBuffer()));
-
             // pause if writing queue is full
             if (event.result().writeQueueFull()) {
                 logger.info("socket writing queue is full - paused");
                 event.result().pause();
                 event.result().drainHandler(done -> {
-                    logger.info("socket writin queue is drained - continue");
+                    logger.info("socket writing queue is drained - continue");
                     event.result().resume();
                 });
             }
             event.result().write(this.action.toBuffer(), handler->{
                 if (handler.succeeded()){
-                    logger.info(String.format("event %s succeeded writing to socket", this.action.toString()));
-                    logger.info(String.format("result %s", handler.result()));
-                    // TODO: if result is null - retry
+                    logger.debug(String.format("event %s succeeded writing to socket", this.action.toString()));
                 }
                 else{
-                    logger.info(String.format("event %s failed writing to socket!", this.action.toString()));
+                    logger.debug(String.format("event %s failed writing to socket!", this.action.toString()));
                 }
             });
             event.result().end(); // end handler

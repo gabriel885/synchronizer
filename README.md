@@ -106,6 +106,7 @@ docker exec container-name-2 /bin/bash
     {
       "type": "REQUEST",
       "path": "/opt/dir/newFile.txt",
+      "isDir": false,
       "timestamp": 1572740322
     }
 ```
@@ -125,7 +126,7 @@ docker exec container-name-2 /bin/bash
     {
       "type": "SYNC",
       "timestamp": 1572743222, 
-      "buffer": "{}"
+      "files": "{'path':',/opt/dir/something3','checksum':'',','isDir':true}{'path':',/opt/dir/something','checksum':'','isDir':true}{'path':',/opt/dir/example.txt','checksum':'01eb2c11c2685e04a0e3b0556549b914','isDir':false}"
     }
 ```
 

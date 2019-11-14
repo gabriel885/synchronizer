@@ -8,8 +8,6 @@ import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.models.EventBusAddress;
-import synchronizer.models.File;
-import synchronizer.models.actions.Ack;
 import synchronizer.models.actions.ActionType;
 
 import java.nio.file.Path;
@@ -56,14 +54,12 @@ public class PublishOutcomingActionsVerticle extends AbstractVerticle {
         // connect consumer
         this.consumer = eb.consumer(outcomingAddress.toString(), actionReceived->{
             // confirm message
-            actionReceived.reply(new Ack());
+           // actionReceived.reply(new Ack());
 
             ActionType actionType = ActionType.getType(actionReceived.body().getString("type"));
 
             // temp action object for further modifications
             JsonObject action;
-
-            File f = new File(actionReceived.body());
 
             switch (actionType){
                 case DELETE:
@@ -87,13 +83,16 @@ public class PublishOutcomingActionsVerticle extends AbstractVerticle {
                     tcpPeer.broadcastAction(relativizePath(action));
                     break;
                 case REQUEST:
-                    logger.debug("broadcasting request action");
+                    logger.info("broadcasting request action");
                     action = actionReceived.body();
                     // broadcast only relative path!!
                     tcpPeer.broadcastAction(relativizePath(action));
-
+                case SYNC:
+                    logger.info("broadcasting sync action");
+                    action = actionReceived.body();
+                    tcpPeer.broadcastAction(relativizePath(action));
                 default:
-                    logger.warn(String.format("%s received unknown action type from message: %s",this.tcpPeer.getHost(),actionReceived.body().toString()));
+                    logger.debug(String.format("%s received unknown action type from message: %s",this.tcpPeer.getHost(),actionReceived.body().toString()));
                     break;
             }
         });
@@ -105,6 +104,9 @@ public class PublishOutcomingActionsVerticle extends AbstractVerticle {
      * @return
      */
     private JsonObject relativizePath(JsonObject action){
+        if (action.getString("path") == null){
+            return null;
+        }
         Path relativeFile = this.path.relativize(Paths.get(action.getString("path")));
         action.put("path",relativeFile.toString());
         return action;

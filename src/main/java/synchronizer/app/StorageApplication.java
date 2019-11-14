@@ -12,6 +12,7 @@ import synchronizer.verticles.storage.SyncVerticle;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.concurrent.ThreadLocalRandom;
 
 // StorageApplication component responsible for deploying all
 // verticles regarding local file system alternations.
@@ -47,20 +48,14 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
         vertx.deployVerticle(new ActionSenderVerticle(myIpAddress,this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("local.path")), deployResult1->{
             if (deployResult1.succeeded()){
                 // deploy all synchronizer.verticles.storage application verticles
-                vertx.deployVerticle(new ActionReceiverVerticle(myIpAddress, this.path, new EventBusAddress("incoming.actions"), new SharedDataMapAddress("local.path")), deployResult2 -> {
-                    if (deployResult2.succeeded()){
-                        // run maps sync verticle every 5 seconds
-                        vertx.setPeriodic(5000, v->{
-                            vertx.deployVerticle(new SyncVerticle(this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("global.path"), new SharedDataMapAddress("local.map")));
-                        });
-                    }
-
-                });
+                vertx.deployVerticle(new ActionReceiverVerticle(myIpAddress, this.path, new EventBusAddress("incoming.actions"), new SharedDataMapAddress("local.path")));
             }
+        });
+        vertx.setPeriodic( ThreadLocalRandom.current().nextInt(7000, 10000 + 1), v->{
+            vertx.deployVerticle(new SyncVerticle(this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("global.path"), new SharedDataMapAddress("local.path")));
         });
 
     }
-
 
     @Override
     public void kill(){
@@ -69,7 +64,4 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
         sequentTasks.shutdownNow();
         vertx.close();
     }
-
-
-
 }

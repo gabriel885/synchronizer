@@ -46,18 +46,29 @@ public abstract class Action extends JsonObject {
                         return false;
                     }
                     return true;
+                case REQUEST:
+                    return true;
                 case RESPONSE:
                     if (!jsonAction.containsKey("checksum") || !jsonAction.containsKey("buffer") || !jsonAction.containsKey("isDir")){
                         return false;
                     }
                     return true;
-
+                case SYNC:
+                    if (!jsonAction.containsKey("checksum") || !jsonAction.containsKey("isDir")){
+                        return false;
+                    }
+                    return true;
                 case UNKNOWN:
                     return false;
                 default: // ACK NACK REQUEST RESPONSE
                     return true;
             }
         }else{
+            if (jsonAction.containsKey("type")){
+                if (ActionType.getType(jsonAction.getString("type")) == ActionType.SYNC){
+                    return true;
+                }
+            }
             return false;
         }
     }

@@ -116,9 +116,13 @@ public class ApplyIncomingActionsVerticle extends AbstractVerticle {
      * @return
      */
     private JsonObject absolutizePath(JsonObject action){
-        if (action==null || !action.containsKey("path")){
+        if (action==null){
             return null;
         }
+        if (!action.containsKey("path")){
+            return action;
+        }
+
         String relativeFile = action.getString("path");
         Path absoluteFile = Paths.get(this.path.toString(),relativeFile);
         action.put("path",absoluteFile.toString());

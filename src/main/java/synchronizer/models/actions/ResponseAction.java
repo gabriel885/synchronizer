@@ -26,6 +26,7 @@ public class ResponseAction extends Action {
     private long unixTime;
 
     public ResponseAction(Path fileToResponse,boolean isDir, Buffer responseBuffer){
+        super(ActionType.RESPONSE);
         this.fileToResponse = fileToResponse;
         this.isDir = isDir;
         this.bufferToResponse = responseBuffer;

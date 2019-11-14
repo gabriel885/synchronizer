@@ -14,7 +14,11 @@ public class RequestAction extends Action {
     // timestamp action was performed
     private long unixTime;
 
-    public RequestAction(String fileToRequest){
+    private boolean isDir;
+
+    public RequestAction(String fileToRequest, boolean isDir){
+        super(ActionType.REQUEST);
+        this.isDir = isDir;
         this.fileToRequest = fileToRequest;
         this.unixTime = System.currentTimeMillis() / 1000L;
     }
@@ -37,6 +41,7 @@ public class RequestAction extends Action {
         return new JsonObject()
                 .put("type","REQUEST")
                 .put("path",this.fileToRequest)
+                .put("isDir", this.isDir)
                 .put("timestamp",this.unixTime).toString();
     }
 }

@@ -8,6 +8,7 @@ public enum ActionType {
     MODIFY,
     REQUEST, // request file
     RESPONSE, // response with a file
+    SYNC,
     UNKNOWN;
     public static ActionType getType(String type){
         if (type==null || type.equals("")){
@@ -28,6 +29,8 @@ public enum ActionType {
                 return ActionType.REQUEST;
             case "RESPONSE":
                 return ActionType.RESPONSE;
+            case "SYNC":
+                return ActionType.SYNC;
                 default:
                     return ActionType.UNKNOWN; // unknown action type
         }
