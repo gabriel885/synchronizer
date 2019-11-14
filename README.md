@@ -97,7 +97,7 @@ docker exec container-name-2 /bin/bash
     {
       "type": "DELETE",
       "path": "/opt/dir/newFile.txt",
-      isDir: false,
+      "isDir": false,
       "timestamp": 1572730328
     }
 ```
