@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.models.EventBusAddress;
 import synchronizer.models.Peer;
+import synchronizer.tasks.Task;
 import synchronizer.verticles.p2p.ApplyIncomingActionsVerticle;
 import synchronizer.verticles.p2p.PublishOutcomingActionsVerticle;
 import synchronizer.verticles.p2p.TCPPeer;
@@ -50,6 +51,14 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     private Path path;
 
     public P2PApplication(String path,String []devices) throws Exception{
+
+        scheduleSequentTask(new Task() {
+            @Override
+            public void run() {
+
+            }
+        });
+
         // peers names
         for (String device: devices) {
             String host = device.split(":")[0];

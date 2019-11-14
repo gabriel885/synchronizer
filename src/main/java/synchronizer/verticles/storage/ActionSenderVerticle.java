@@ -17,7 +17,7 @@ import synchronizer.models.SharedDataMapAddress;
 import synchronizer.models.actions.CreateAction;
 import synchronizer.models.actions.DeleteAction;
 import synchronizer.models.actions.ModifyAction;
-import synchronizer.models.diff.Checksum;
+import synchronizer.models.Checksum;
 
 import java.io.File;
 import java.nio.file.Path;

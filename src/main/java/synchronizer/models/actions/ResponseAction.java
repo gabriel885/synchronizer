@@ -2,7 +2,7 @@ package synchronizer.models.actions;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
-import synchronizer.models.diff.Checksum;
+import synchronizer.models.Checksum;
 
 import java.nio.file.Path;
 

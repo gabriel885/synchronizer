@@ -1,4 +1,4 @@
-package synchronizer.models.diff;
+package synchronizer.models;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
