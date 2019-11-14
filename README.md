@@ -276,4 +276,4 @@ Client 2:
 docker run --net mynet123 --ip 172.18.0.15 -it --rm synchronizer:latest  
 ```
 
-[https://streamable.com/bjcvp](Demo video)
+[Demo video](https://streamable.com/bjcvp)
