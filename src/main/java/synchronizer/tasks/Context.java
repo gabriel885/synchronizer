@@ -19,8 +19,7 @@ public final class Context implements Runnable{
      * Create context without a parent context and without cancelDuration timeout
      */
     public Context(){
-        parentContext=null;
-        cancelDuration=-1;
+        this(-1);
     }
 
     /**
@@ -28,7 +27,8 @@ public final class Context implements Runnable{
      * @param timeout
      */
     public Context(long timeout){
-        this(null);
+        parentContext=null;
+        cancelDuration=timeout;
     }
 
     /**
@@ -36,6 +36,7 @@ public final class Context implements Runnable{
      * @param parentContext
      */
     public Context(Context parentContext){
+
         this(parentContext,-1);
     }
 

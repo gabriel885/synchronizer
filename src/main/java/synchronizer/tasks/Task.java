@@ -1,8 +1,12 @@
 package synchronizer.tasks;
 
+import synchronizer.app.StorageApplication;
+
 import java.net.Socket;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -10,30 +14,29 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class Task implements Runnable {
 
     // default service timeout in seconds
-    private final int defaultTimeout = 5;
+    int defaultTimeout = 5;
 
-    // allowed inheritance classes
-    private final ArrayList<Class> allowed = new ArrayList<Class>(){{
-        // add(StorageService.class);
-    }};
+    // immutable list
+    final List<Class> allowed = Collections.unmodifiableList(new ArrayList<Class>(){
+        {
+            add(StorageApplication.class);
+        }
+    });
 
-
-    private final Duration timeout = Duration.ofSeconds(defaultTimeout);
+    final Duration timeout = Duration.ofSeconds(defaultTimeout);
 
     // Services Socket
-    protected Socket ipAddr;
+    Socket ipAddr;
 
     // Task's context
-    private Context ctx;
+    Context ctx;
 
-    private final AtomicBoolean running = new AtomicBoolean(false);
+    final AtomicBoolean running = new AtomicBoolean(false);
 
 
     // no context declared
     public Task() {
-        // TODO: Should not throw an exception. should throw future indicating an error
-        //validInheritence();
-        // if StorageService not superclass throw an error
+        // Context factory
         this.ctx=null;
     }
 

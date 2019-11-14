@@ -9,7 +9,6 @@ import synchronizer.verticles.p2p.ApplyIncomingActionsVerticle;
 import synchronizer.verticles.p2p.PublishOutcomingActionsVerticle;
 import synchronizer.verticles.p2p.TCPPeer;
 
-import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
@@ -17,13 +16,12 @@ import java.util.Iterator;
 import java.util.Set;
 
 
+// peer to peer application component responsible for connectiong
+// peers to network and maintaining connections
 public class P2PApplication extends AbstractMultiThreadedApplication {
 
     // logger
     private static final Logger logger = LogManager.getLogger(P2PApplication.class);
-
-    // host/port internet address
-    protected InetAddress inetAddress;
 
     // reconnect attempts to each non-responding peer
     private static final int reconnectAttemps = 10;
@@ -42,8 +40,6 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     // peer's listening port
     private final int port = 2020;
 
-    private final String myHost;
-
     // synchronizer.verticles.p2p application's peers
     private Set<Peer> peers = new HashSet<>();
 
@@ -53,14 +49,7 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     // local monitorable path
     private Path path;
 
-
-
-
     public P2PApplication(String path,String []devices) throws Exception{
-        // initialise synchronizer.verticles.p2p applicaiton stuff
-        this.inetAddress = inetAddress.getLocalHost();
-        this.myHost = this.inetAddress.getHostAddress();
-
         // peers names
         for (String device: devices) {
             String host = device.split(":")[0];
@@ -73,12 +62,12 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
         // log peers
         while (itr.hasNext()){
             Peer other = itr.next();
-            if (other.compareTo(new Peer(myHost,port))==1){
+            if (other.compareTo(new Peer(myIpAddress,port))==1){
                 itr.remove();
             }
         }
         this.path = Paths.get(path);
-        this.tcpPeer = new TCPPeer(myHost, port, peers, new NetClientOptions().setReconnectAttempts(reconnectAttemps).setReconnectInterval(reconnectInterval));
+        this.tcpPeer = new TCPPeer(myIpAddress, port, peers, new NetClientOptions().setReconnectAttempts(reconnectAttemps).setReconnectInterval(reconnectInterval));
     }
 
     /**
@@ -117,7 +106,7 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
      */
     @Override
     public String toString(){
-        return String.format("%s:%d",this.myHost, this.port);
+        return String.format("%s:%d",myIpAddress, this.port);
     }
 
 }

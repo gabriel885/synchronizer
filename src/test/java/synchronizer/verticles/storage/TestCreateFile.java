@@ -2,8 +2,10 @@ package synchronizer.verticles.storage;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.unit.TestContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.Before;
 import org.junit.jupiter.api.Test;
 import utils.RandomString;
 
@@ -31,6 +33,10 @@ public class TestCreateFile {
         this.vertx = Vertx.vertx();
     }
 
+    @Before
+    public void perpare(TestContext context){
+
+    }
     @Test
     public void testFileCreationOverride(){
 
@@ -74,6 +80,37 @@ public class TestCreateFile {
                 assertEquals(buffer.toString(), vertx.fileSystem().readFileBlocking(fileToCreate.toAbsolutePath().toString()).toString());
             }
         });
+
+
+    }
+
+    /**
+     * test file creation inside a directory that does not exist locally
+     */
+    @Test
+    public void testFileCreationOnMissingDirectory(){
+
+        Vertx vertx = Vertx.vertx();
+        String testSubDir = genRandomString.nextString();
+        Path fileToCreate = Paths.get(testDir,testSubDir,genRandomString.nextString()+".txt");
+        Buffer buffer = Buffer.buffer().appendString("new content");
+        logger.info(String.format("Test created file %s inside non existing directory %s", fileToCreate.toAbsolutePath().toString(), testSubDir));
+        // deploy create verticle and check creations upon deploy complete
+        vertx.deployVerticle(new CreateFileVerticle(fileToCreate, true,buffer), handler->{
+            // TODO: run assettions only after handlers retured the future
+            // if file creation succedded
+            if (handler.succeeded()) {
+                // check if file exists
+                assertTrue(Files.exists(fileToCreate));
+                // check that the file is not a directory
+                assertTrue(!Files.isDirectory(fileToCreate));
+                // check file's data
+                assertEquals(buffer.toString(), vertx.fileSystem().readFileBlocking(fileToCreate.toAbsolutePath().toString()).toString());
+
+            }
+        });
+
+        // wait for deployement completion
 
 
     }

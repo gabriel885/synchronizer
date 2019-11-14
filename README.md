@@ -97,6 +97,7 @@ docker exec container-name-2 /bin/bash
     {
       "type": "DELETE",
       "path": "/opt/dir/newFile.txt",
+      isDir: false,
       "timestamp": 1572730328
     }
 ```
@@ -113,6 +114,7 @@ docker exec container-name-2 /bin/bash
     {
       "type": "RESPONSE",
       "path": "/opt/dir/newFile.txt",
+      "isDir": false,
       "checksum": "f8a6701de14ec3fcfd9f2fe595e9c9ed",
       "timestamp": 1572740322,
       "buffer": "this is content of requested file"

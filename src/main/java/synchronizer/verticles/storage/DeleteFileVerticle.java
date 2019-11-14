@@ -33,11 +33,11 @@ public class DeleteFileVerticle extends AbstractVerticle {
             startFuture.fail(String.format("received invalid file to delete %s", fileToDelete));
             return;
         }
-        // Check existence and delete
+        // Check existence and delete recursively the path
         vertx.fileSystem().exists(fileToDelete, result -> {
             if (result.succeeded()) {
                 if (result.result()){ // if file exists delete it
-                    vertx.fileSystem().deleteBlocking(fileToDelete);
+                    vertx.fileSystem().deleteRecursiveBlocking(fileToDelete,true);
                     logger.info(String.format("deleted file %s", fileToDelete));
                 }
                 else{

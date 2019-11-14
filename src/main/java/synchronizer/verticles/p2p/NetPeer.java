@@ -29,7 +29,7 @@ public class NetPeer extends AbstractPeer {
     private String peerName;
 
     // peer's port (default 2020)
-    private int peerPort;
+    protected int peerPort;
 
     // peers to connect to
     // K: peer's host
@@ -98,7 +98,7 @@ public class NetPeer extends AbstractPeer {
         NetServer server = vertx.createNetServer(serverOptions);
         // dummy handler
         server.connectHandler(handler->{
-
+            //
         });
         return server.listen();
     }
@@ -111,8 +111,7 @@ public class NetPeer extends AbstractPeer {
      */
     protected final NetServer listen(ActionHandler handler) {
         NetServer server = vertx.createNetServer(serverOptions);
-        server.connectHandler(handler);
-        return server.listen();
+        return server.connectHandler(handler).listen();
     }
 
     /**
@@ -136,7 +135,7 @@ public class NetPeer extends AbstractPeer {
         server.listen(res->{
             // this is handler
             if (res.succeeded()){
-                logger.debug(String.format("%s is listening for connections", toString()));
+                logger.debug(String.format("%s is listening for connections from %s", toString(), peers.keySet().toString()));
                 future.complete();
             }
             else{

@@ -6,7 +6,6 @@ import io.vertx.core.buffer.Buffer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 
@@ -40,29 +39,24 @@ public class CreateFileVerticle extends AbstractVerticle {
         }
 
         // if file exists - override it
-        try{
-            Files.deleteIfExists(this.fileToCreate);
-        }catch(Exception e){
-            startFuture.fail(String.format("failed to delete existing file %s", this.fileToCreate.toString()));
+        if (vertx.fileSystem().existsBlocking(this.fileToCreate.toString())){
+            vertx.fileSystem().deleteRecursiveBlocking(this.fileToCreate.toString(),true);
         }
 
+        // check if sub directories exist
 
-        // check if it's a directory
+        // create dir
         if (isDir){
-
             vertx.fileSystem().mkdirBlocking(this.fileToCreate.toString());
             logger.info(String.format("created dir %s", this.fileToCreate.toString()));
         }
-        else{ // that's a file
-            // check if the file buffer is not empty
-            if(fileBuffer==null || fileBuffer.toString().isEmpty()){ // validate buffer
-                logger.info(String.format("Failed to create file %s with buffer ", this.fileToCreate, this.fileBuffer.toString()));
-                startFuture.fail(String.format("Failed to create file %s with buffer ", this.fileToCreate, this.fileBuffer.toString()));
-            }
-            // create new file and overwrite origin file
+        else{ // create file with buffer
+            // create all sub-path if they are missing
+            vertx.fileSystem().mkdirsBlocking(this.fileToCreate.getParent().toString());
             vertx.fileSystem().writeFileBlocking(this.fileToCreate.toString(), this.fileBuffer);
             logger.info(String.format("created file %s", this.fileToCreate.toString()));
         }
+
         startFuture.complete();
     }
 

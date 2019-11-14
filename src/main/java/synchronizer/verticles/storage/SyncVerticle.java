@@ -1,7 +1,6 @@
 package synchronizer.verticles.storage;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
@@ -10,13 +9,11 @@ import io.vertx.core.shareddata.SharedData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.models.EventBusAddress;
-import synchronizer.models.File;
 import synchronizer.models.SharedDataMapAddress;
-import synchronizer.models.actions.RequestAction;
-import synchronizer.models.diff.Checksum;
 
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 // responsible for comparing between global path structure and local path structure
 // to detect conflicts, adopt global path - request missing files and make local changes.
@@ -34,6 +31,8 @@ public class SyncVerticle extends AbstractVerticle {
     // shared data local map
     private SharedData sd;
 
+    private Deque<Long> timestampStack = new ArrayDeque<Long>();
+
     // local maps addresses
     private SharedDataMapAddress localMapName, globalMapName;
 
@@ -42,6 +41,7 @@ public class SyncVerticle extends AbstractVerticle {
 
     // address to publish to
     private EventBusAddress outcomingAddress;
+
 
     // produce file system actions to event bus
     private MessageProducer<JsonObject> producer;
@@ -53,9 +53,12 @@ public class SyncVerticle extends AbstractVerticle {
         this.outcomingAddress = outcomingAddress;
     }
 
-
     @Override
-    public void start(Future<Void> startFuture) throws Exception{
+    public void start() {
+
+        vertx.deployVerticle(new MyVerticle());
+
+        logger.info("sync verticle deployed!");
         // shared data
         this.sd = vertx.sharedData();
         // event bus
@@ -64,26 +67,29 @@ public class SyncVerticle extends AbstractVerticle {
         // event bus producer
         this.producer = this.eb.publisher(this.outcomingAddress.toString());
 
-        LocalMap<String, File> localMap = this.sd.getLocalMap(localMapName.toString());
-        LocalMap<String, File> globalMap = this.sd.getLocalMap(globalMapName.toString());
+        LocalMap<String, JsonObject> localMap = this.sd.getLocalMap(localMapName.toString());
+        LocalMap<String, JsonObject> globalMap = this.sd.getLocalMap(globalMapName.toString());
 
         // compare map keys and file last modification
-        for (Map.Entry entry : globalMap.entrySet()){
-            // check that key exists
-            // or if the checksums of the files differ
-            if (!localMap.containsKey(entry.getKey()) || !Checksum.equals(localMap.get(entry).getChecksum(), globalMap.get(entry).getChecksum())){
-                logger.info(String.format("Found file %s that does not exists locally. Requesting file...",entry.getKey()));
-                JsonObject actionObject = new JsonObject(new RequestAction(entry.getKey().toString()).toJson());
-                // send request action to event bus
-                this.producer.send(actionObject);
-            }
-            else{
+//        for (Map.Entry entry : globalMap.entrySet()){
+//            // check that key exists
+//            // or if the checksums of the files differ
+//            if (!localMap.containsKey(entry.getKey()) || !Checksum.equals(localMap.get(entry).getChecksum(), globalMap.get(entry).getChecksum())){
+//                logger.info(String.format("Found file %s that does not exists locally. Requesting file...",entry.getKey()));
+//                JsonObject actionObject = new JsonObject(new RequestAction(entry.getKey().toString()).toJson());
+//                // send request action to event bus
+//                this.producer.send(actionObject);
+//            }
+//            else{
+//
+//            }
+//        }
 
-            }
-        }
+        logger.info("local map:");
+        logger.info(localMap.keySet());
     }
 
     @Override
-    public void stop(Future<Void> stopFuture) throws Exception{
+    public void stop() throws Exception{
     }
 }

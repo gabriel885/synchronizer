@@ -13,7 +13,9 @@ public class ResponseAction extends Action {
 
     // path of file to response
     private Path fileToResponse;
+    // true if path is directory
 
+    private boolean isDir;
     // file's buffer to response
     private Buffer bufferToResponse;
 
@@ -23,8 +25,9 @@ public class ResponseAction extends Action {
     // timestamp of action
     private long unixTime;
 
-    public ResponseAction(Path fileToResponse, Buffer responseBuffer){
+    public ResponseAction(Path fileToResponse,boolean isDir, Buffer responseBuffer){
         this.fileToResponse = fileToResponse;
+        this.isDir = isDir;
         this.bufferToResponse = responseBuffer;
         this.checksum = Checksum.checksum(fileToResponse);
         this.unixTime = System.currentTimeMillis() / 1000L;
@@ -50,6 +53,7 @@ public class ResponseAction extends Action {
         return new JsonObject()
                 .put("type","RESPONSE")
                 .put("path",this.fileToResponse)
+                .put("isDir", this.isDir)
                 .put("checksum", this.checksum)
                 .put("timestamp", this.unixTime)
                 .put("buffer",this.bufferToResponse)

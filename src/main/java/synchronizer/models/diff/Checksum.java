@@ -19,10 +19,12 @@ public interface  Checksum{
      * @return
      */
     static String checksum(Path file){
+
+        String md5;
+
         if (file.toFile().isDirectory()){
             return ""; // directory dont have checksum
         }
-        String md5;
         try (InputStream is = Files.newInputStream(file)) {
             md5 = org.apache.commons.codec.digest.DigestUtils.md5Hex(is);
             return md5;

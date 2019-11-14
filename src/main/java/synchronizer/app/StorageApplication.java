@@ -13,7 +13,7 @@ import synchronizer.verticles.storage.SyncVerticle;
 import java.io.File;
 import java.nio.file.Path;
 
-// StorageApplication responsible for deploying all
+// StorageApplication component responsible for deploying all
 // verticles regarding local file system alternations.
 public class StorageApplication extends AbstractMultiThreadedApplication {
 
@@ -22,6 +22,7 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
 
     // Local path for synchronizer.verticles.storage application to synchronize
     private Path path;
+
 
     public StorageApplication(String pathString) throws Exception{
         // parse application arguments and initialize synchronizer.verticles.storage application stuff
@@ -41,21 +42,24 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
      */
     @Override
     public void start() throws Exception {
-        logger.warn(String.format("%s: starting Storage application on path %s",getIpAddress(), this.path.toString()));
+        logger.warn(String.format("%s: starting Storage application on path %s",myIpAddress, this.path.toString()));
 
+        vertx.deployVerticle(new ActionSenderVerticle(myIpAddress,this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("local.path")), deployResult1->{
+            if (deployResult1.succeeded()){
+                // deploy all synchronizer.verticles.storage application verticles
+                vertx.deployVerticle(new ActionReceiverVerticle(myIpAddress,this.path, new EventBusAddress("incoming.actions"), new SharedDataMapAddress("global.path")), deployResult2->{
+                    if (deployResult2.succeeded()){
+                        // run maps sync verticle every 5 seconds
+                        vertx.setPeriodic(5000, v->{
+                            vertx.deployVerticle(new SyncVerticle(this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("global.path"), new SharedDataMapAddress("local.map")));
+                        });
+                    }
 
-        vertx.deployVerticle(new ActionSenderVerticle(this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("local.path")), deployResult1->{
-            // deploy all synchronizer.verticles.storage application verticles
-            vertx.deployVerticle(new ActionReceiverVerticle(this.path, new EventBusAddress("incoming.actions"), new SharedDataMapAddress("global.path")), deployResult2->{
-                // run maps sync verticle every 5 seconds
-                vertx.setPeriodic(5000, v->{
-                    vertx.deployVerticle(new SyncVerticle(this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("global.path"), new SharedDataMapAddress("local.map")));
                 });
-            });
+            }
         });
 
     }
-
 
 
     @Override

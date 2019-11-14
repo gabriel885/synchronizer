@@ -29,6 +29,9 @@ public abstract class AbstractMultiThreadedApplication{
     // vertx event bus
     protected final static EventBus eb = vertx.eventBus();
 
+    // local machine ip address
+    protected final static String myIpAddress = getIpAddress();
+
     // ExecutorService meta information
     class TaskMeta {
         static final int maxPoolSize = 10; // the maximum number of threads to allow in the pool
@@ -92,8 +95,9 @@ public abstract class AbstractMultiThreadedApplication{
 
     /**
      * @return hosts IP address
+     * NOTE: this is a blocking operation, therefore it's expensive and should be used as less as possible!
      */
-    protected String getIpAddress(){
+    private static String getIpAddress(){
         InetAddress ipAddr;
         try{
             ipAddr =  InetAddress.getLocalHost();

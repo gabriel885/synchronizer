@@ -1,6 +1,7 @@
 package synchronizer.verticles.p2p;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
@@ -43,6 +44,8 @@ public class PublishOutcomingActionsVerticle extends AbstractVerticle {
         this.outcomingAddress = outcomingAddress;
         this.tcpPeer = tcpPeer;
         this.path = path;
+
+        Buffer buffer = Buffer.buffer();
     }
 
     @Override

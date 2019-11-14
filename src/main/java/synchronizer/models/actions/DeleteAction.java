@@ -14,10 +14,13 @@ public class DeleteAction extends Action {
     // timestamp action was performed
     private long unixTime;
 
-    public DeleteAction(Path fileToDelete) {
+    private boolean isDir;
+
+    public DeleteAction(Path fileToDelete, boolean isDir) {
         super(ActionType.DELETE);
         this.fileToDelete = fileToDelete;
         this.unixTime = System.currentTimeMillis() / 1000L;
+        this.isDir = isDir;
     }
 
     @Override
@@ -40,6 +43,7 @@ public class DeleteAction extends Action {
                 .put("type","DELETE")
                 .put("path",this.fileToDelete.toString())
                 .put("timestamp",this.unixTime)
+                .put("isDir", this.isDir)
                 .toString();
     }
 

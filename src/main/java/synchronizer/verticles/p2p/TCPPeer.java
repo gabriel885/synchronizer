@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.models.Peer;
 import synchronizer.verticles.p2p.handlers.Handlers;
+import synchronizer.verticles.p2p.handlers.LogActionHandler;
 import synchronizer.verticles.p2p.handlers.SendActionHandler;
 
 import java.util.Set;
@@ -27,9 +28,7 @@ public class TCPPeer extends NetPeer implements Protocol{
 
     // server handlers (send actions to other peers)
     // default handler must be registered - registering dummy handler
-    private Handlers serverHandlers = new Handlers(event -> {
-        // dummy handler
-    });
+    private Handlers serverHandlers = new Handlers(new LogActionHandler());
 
     // client handlers (receive actions from other peers)
     // default handler must be registered - registering dummy handler
@@ -95,6 +94,7 @@ public class TCPPeer extends NetPeer implements Protocol{
         listen(serverHandlers);
         connect(clientHandlers);
 
+        // log all peers we are listening to
         logger.info(String.format("%s is deployed", this.getHost()));
     }
 
@@ -121,5 +121,13 @@ public class TCPPeer extends NetPeer implements Protocol{
         }
     }
 
+    /**
+     * send an action to specific peer
+     * @param peer
+     * @param action
+     */
+    public void sendAction(Peer peer, JsonObject action){
+        connect(peer,new SendActionHandler(action));
+    }
 
 }

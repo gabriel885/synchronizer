@@ -24,6 +24,8 @@ public abstract class Action extends JsonObject {
     // action as json string
     public abstract String toJson();
 
+
+
     /**
      * return true if action is valid - contains valid json scheme according to action type
      * @param jsonAction
@@ -35,15 +37,21 @@ public abstract class Action extends JsonObject {
                 case DELETE:
                     return true;
                 case MODIFY:
-                    if (!jsonAction.containsKey("checksum") || !jsonAction.containsKey("buffer")){
+                    if (!jsonAction.containsKey("checksum") || !jsonAction.containsKey("buffer") || !jsonAction.containsKey("isDir")){
                         return false;
                     }
                     return true;
                 case CREATE:
-                    if (!jsonAction.containsKey("checksum") || !jsonAction.containsKey("buffer")){
+                    if (!jsonAction.containsKey("checksum") || !jsonAction.containsKey("buffer") || !jsonAction.containsKey("isDir")){
                         return false;
                     }
                     return true;
+                case RESPONSE:
+                    if (!jsonAction.containsKey("checksum") || !jsonAction.containsKey("buffer") || !jsonAction.containsKey("isDir")){
+                        return false;
+                    }
+                    return true;
+
                 case UNKNOWN:
                     return false;
                 default: // ACK NACK REQUEST RESPONSE

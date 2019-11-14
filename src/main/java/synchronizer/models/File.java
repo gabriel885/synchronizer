@@ -19,11 +19,12 @@ public class File implements Shareable {
     // file's buffer
     private Buffer buffer;
 
-    // true whenever SyncVerticle checks that global and local map are equal
-    private boolean syncCheck = false;
+    // true if file is a directory
+    private boolean isDir;
 
-    public File(String fileName, String checksum, long timestamp, Buffer buffer){
+    public File(String fileName, boolean isDir,  String checksum, long timestamp, Buffer buffer){
         this.fileName = fileName;
+        this.isDir = isDir;
         this.checkSum = checksum;
         this.timestamp = timestamp;
         this.buffer = buffer;

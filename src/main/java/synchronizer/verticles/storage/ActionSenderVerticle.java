@@ -20,7 +20,6 @@ import synchronizer.models.actions.ModifyAction;
 import synchronizer.models.diff.Checksum;
 
 import java.io.File;
-import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -42,13 +41,15 @@ public class ActionSenderVerticle extends AbstractVerticle {
 
     // observer
     private FileAlterationObserver observer;
+
     // notify observables
     private FileAlterationMonitor monitor;
+
     // observable
     private FileAlterationListener listener;
 
     // local map
-    protected LocalMap<String, synchronizer.models.File> localMap;
+    protected LocalMap<String, JsonObject> localMap;
 
     // event bus
     private EventBus eb;
@@ -71,7 +72,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
      * @param outcomingAddress - event bus address to broadcast outcoming alternations
      * @param localMapAddress - SharedData map address for local path structure
      */
-    public ActionSenderVerticle(Path path, EventBusAddress outcomingAddress, SharedDataMapAddress localMapAddress){
+    public ActionSenderVerticle(String myIpAddress,Path path, EventBusAddress outcomingAddress, SharedDataMapAddress localMapAddress){
 
         this.outcomingAddress = outcomingAddress;
         this.localMapAddress = localMapAddress;
@@ -81,7 +82,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
         this.observer = new FileAlterationObserver(path.toString());
         this.monitor = new FileAlterationMonitor(MONITOR_INTERVAL);
 
-        this.host = getHost();
+        this.host = myIpAddress;
     }
 
     @Override
@@ -92,10 +93,14 @@ public class ActionSenderVerticle extends AbstractVerticle {
 
         // event bus
         this.eb = vertx.eventBus();
+
         // event bus producer
         this.producer = this.eb.publisher(this.outcomingAddress.toString());
 
         this.listener = new FileAlterationListener() {
+
+            // monitorable path
+            private Path path;
             // max number of retries
             private int MAX_RETRY=7;
             // attempts made
@@ -104,118 +109,118 @@ public class ActionSenderVerticle extends AbstractVerticle {
             // action object
             JsonObject actionObject = new JsonObject();
 
+            public FileAlterationListener start(Path path){
+                this.path = path;
+                logger.info("starting file alternation listener");
+                return this;
+            }
 
             @Override
             public void onStart(org.apache.commons.io.monitor.FileAlterationObserver observer) {
-
-                // save in shared data the initial hierarchy
+                // do nothing
             }
-
 
             @Override
             public void onFileCreate(File file)  {
+
+                // validate that the file has not been modified from an outside action. (e.g the ping-pong problem)
+                if (!validAction(file)){
+                    return;
+                }
+
                 // create action object and publish it to the event bus
                 Buffer fileBuffer = vertx.fileSystem().readFileBlocking(file.toPath().toString());
                 actionObject = new JsonObject(new CreateAction(file.toPath(), false, fileBuffer).toJson());
                 publish(actionObject);
-                // update local map
-                updateMap(file.getName(),new synchronizer.models.File(actionObject));
+
             }
 
             @Override
             public void onFileChange(File file) {
+                // validate that the file has not been modified from an outside action. (e.g the ping-pong problem)
+                // file must exist locally
+                if (!validAction(file)){
+                    return;
+                }
                 Buffer modifiedBuffer = vertx.fileSystem().readFileBlocking(file.toPath().toString());
-                actionObject = new JsonObject(new ModifyAction(file.toPath(), modifiedBuffer).toJson());
-                publish(actionObject);
-                // update local map
-                updateMap(file.getName(),new synchronizer.models.File(actionObject));
-            }
-
-            @Override
-            public void onFileDelete(File file) {
-                actionObject = new JsonObject(new DeleteAction(file.toPath()).toJson());
-                publish(actionObject);
-                // update local map
-                removeFromMap(file.getName());
-            }
-
-            @Override
-            public void onDirectoryCreate(File dir) {
-                List<String> newFiles = vertx.fileSystem().readDirBlocking(dir.toPath().toString());
-
-                // create the directory itself first
-                actionObject = new JsonObject(new CreateAction(dir.toPath(), true, Buffer.buffer()).toJson());
-                publish(actionObject);
-
-                // create all files inside created dir
-                for (String fileName : newFiles){
-                    Buffer newFileBuffer = vertx.fileSystem().readFileBlocking(fileName);
-                    actionObject = new JsonObject(new CreateAction(Paths.get(fileName), true, newFileBuffer).toJson());
+                if (modifiedBuffer!=null){
+                    actionObject = new JsonObject(new ModifyAction(file.toPath(), false, modifiedBuffer).toJson());
                     publish(actionObject);
-                    // update local map
-                    updateMap(dir.getName(),new synchronizer.models.File(actionObject));
                 }
 
             }
 
             @Override
-            public void onDirectoryChange(File dir) {
+            public void onFileDelete(File file) {
+                actionObject = new JsonObject(new DeleteAction(file.toPath(), false).toJson());
+                publish(actionObject);
+            }
+
+            @Override
+            public void onDirectoryCreate(File dir) {
+                // validate that the file has not been modified from an outside action. (e.g the ping-pong problem)
+                if (!validAction(dir)){
+                    return;
+                }
+
                 List<String> newFiles = vertx.fileSystem().readDirBlocking(dir.toPath().toString());
 
-                // modify directory first
-                actionObject = new JsonObject(new CreateAction(dir.toPath(), true, Buffer.buffer()).toJson());
-                publish(actionObject);
+                // if directory doesn't has files inside it
+                if (newFiles.isEmpty()){
+                    publishCreateDir(dir);
+                    return;
+                }
+
+                // create all files inside created dir
+                for (String fileName : newFiles){
+                    // validate that the file has not been modified from an outside action. (e.g the ping-pong problem)
+                    if (!validAction(new File(fileName))){
+                        continue;
+                    }
+                    Buffer newFileBuffer = vertx.fileSystem().readFileBlocking(fileName);
+                    actionObject = new JsonObject(new CreateAction(Paths.get(fileName), false, newFileBuffer).toJson());
+                    publish(actionObject);
+                }
+            }
+
+            @Override
+            public void onDirectoryChange(File dir) {
+                // validate that the file has not been modified from an outside action. (e.g the ping-pong problem)
+                if (!validAction(dir)){
+                    return;
+                }
+                // read modified directory
+                List<String> newFiles = vertx.fileSystem().readDirBlocking(dir.toPath().toString());
+
+                // no files inside a directory
+                if (newFiles.isEmpty()){
+                    // send create empty directory action
+                    publishCreateDir(dir);
+                    return;
+                }
 
                 // modify files inside modified files inside dir
                 for (String fileName: newFiles){
-                    // calculate checksum of all files
-                    // if checksum differs from origin checksum - send modify action on that particular file
-                    String newFileChecksum = Checksum.checksum(Paths.get(fileName));
-
-                    // check if file in dir exists
-                    if (vertx.fileSystem().existsBlocking(fileName)){
-                        // check if file exists in local map
-                        // if file is not in local map, send create action
-                        if (ActionSenderVerticle.this.localMap.get(fileName) != null){
-                            if (ActionSenderVerticle.this.localMap.get(fileName).getChecksum()!=null){
-                                String originFileChecksum = ActionSenderVerticle.this.localMap.get(fileName).getChecksum();
-                                if (!Checksum.equals(newFileChecksum, originFileChecksum)) {
-                                    // checksums and inequal - send modify action
-                                    Buffer modifiedBuffer = vertx.fileSystem().readFileBlocking(fileName);
-                                    actionObject = new JsonObject(new ModifyAction(Paths.get(fileName),modifiedBuffer).toJson());
-                                    publish(actionObject);
-                                    // update local path
-                                    updateMap(dir.getName(),new synchronizer.models.File(actionObject));
-                                    return;
-                                }
-                                else{
-                                    // file is untouched! checksums are equal
-                                    return;
-                                }
-                            }
-                            else{
-                                // file does not exist in local path map
-                            }
-                        }
-                        else{
-                            // file does not exist in local path map
-                        }
+                    // validate that the file has not been modified from an outside action. (e.g the ping-pong problem)
+                    if (!validAction(new File(fileName))){
+                        return;
                     }
-                     // file does not exist - send create Action
-                    Buffer newFileBuffer = vertx.fileSystem().readFileBlocking(fileName);
-                    actionObject = new JsonObject(new CreateAction(Paths.get(fileName), true, newFileBuffer).toJson());
+                    // publish created file to event bus
+                    // broadcast modify action
+                    Buffer modifiedBuffer = vertx.fileSystem().readFileBlocking(fileName);
+                    actionObject = new JsonObject(new CreateAction(Paths.get(fileName),false,modifiedBuffer).toJson());
                     publish(actionObject);
-                    // update local map
-                    updateMap(dir.getName(),new synchronizer.models.File(actionObject));
                 }
             }
 
             @Override
             public void onDirectoryDelete(File dir) {
-                actionObject = new JsonObject(new DeleteAction(dir.toPath()).toJson());
+                logger.info(String.format("Deleted dir %s", dir.toString()));
+
+                // send delete action as dir
+                actionObject = new JsonObject(new DeleteAction(dir.toPath(),true).toJson());
                 publish(actionObject);
-                // update local map
-                removeFromMap(dir.toString());
+
             }
 
             @Override
@@ -224,15 +229,64 @@ public class ActionSenderVerticle extends AbstractVerticle {
             }
 
             /**
-             * delete file from local map
-             * @param file
+             *
+             * @param dir
              */
-            public void removeFromMap(String file){
-                ActionSenderVerticle.this.localMap.remove(file.toString());
+            public void publishCreateDir(File dir){
+                // send create action of an empty directory
+                // create the directory itself first
+                actionObject = new JsonObject(new CreateAction(dir.toPath(), true, Buffer.buffer()).toJson());
+                publish(actionObject);
             }
 
-            public void updateMap(String file, synchronizer.models.File f){
+            /**
+             * checks inside shared local map if this file was modified recently from an external source
+             * if called function with argument differs in checksum, erase the file from map as it's not
+             * relevant anymore (more recent changes had been taken with the file)
+             * @param file
+             * @return
+             */
+            public boolean validAction(File file){
 
+                // modified file must exist locally
+                // except of a delete action
+                if (!vertx.fileSystem().existsBlocking(file.toString())){
+                    return false;
+                }
+
+                // if a file is a directory the action is valid
+                // all inner files will be validated later
+                if (file.isDirectory()){
+                    return true;
+                }
+
+                // origin file action
+                JsonObject origin;
+
+                // check if file exists in map
+                if ((origin = ActionSenderVerticle.this.localMap.get(file.toString()))!=null){
+
+                    String originChecksum = origin.getString("checksum");
+
+                    if (origin.getBoolean("isDir") == true){
+
+                    }
+                    // compare the checksums of the origin file checksum and the current file
+                    // if the checksums differ - the user has made the modification
+                    if (!Checksum.equals(originChecksum, Checksum.checksum(file.toPath()))){
+                        // remove origin file from map (not relevant any more)
+                        ActionSenderVerticle.this.localMap.remove(file.toString());
+                        return true;
+                    }
+                    else{
+                        // the file was modified by an incoming action - therefore is not valid!!
+                        logger.info(String.format("File %s is been modified by an action", file.toString()));
+                        return false;
+                    }
+                }
+                else{
+                    return true; // file is not in the map meaning it's not been modified by us
+                }
             }
 
             /**
@@ -261,7 +315,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
                 actionObject.clear();
             }
 
-        };
+        }.start(this.path);
 
         observer.addListener(listener);
         monitor.addObserver(observer);
@@ -277,20 +331,4 @@ public class ActionSenderVerticle extends AbstractVerticle {
         logger.error(String.format("%s ActionSenderVerticle failed %s", this.host, stopFuture.result()));
     }
 
-    /**
-     * get local host
-     * NOTE: do not call this in event-loop - might block it
-     * @return
-     */
-    public String getHost(){
-        InetAddress inetAddress;
-        try{
-            inetAddress = InetAddress.getLocalHost();
-        }catch (Exception e){
-            // cry
-            return "Unknown host";
-        }
-        return inetAddress.getHostAddress();
-
-    }
 }
