@@ -14,7 +14,6 @@ import synchronizer.verticles.p2p.handlers.ActionHandler;
 import synchronizer.verticles.p2p.handlers.Handlers;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -35,9 +34,6 @@ public class NetPeer extends AbstractPeer {
     // K: peer's host
     // V: peer model
     protected static HashMap<String,Peer> peers = new HashMap<>();
-
-    // peers that are already connected (by host)
-    protected static Set<String> connectedPeers = new HashSet<>();
 
     // tcp server
     protected final NetServer server;
@@ -89,21 +85,6 @@ public class NetPeer extends AbstractPeer {
         this.server = vertx.createNetServer(serverOptions);
     }
 
-
-    /**
-     * listen to all peers
-     * @return reference to net server
-     */
-    protected final NetServer listen(){
-        NetServer server = vertx.createNetServer(serverOptions);
-        // dummy handler
-        server.connectHandler(handler->{
-            //
-        });
-        return server.listen();
-    }
-
-
     /**
      * listen to all peers with specific handler
      * @param handler
@@ -127,7 +108,7 @@ public class NetPeer extends AbstractPeer {
         Iterator<ActionHandler> itr = listenHandlers.getHandlersIterator();
         while(itr.hasNext()){
             ActionHandler handler = itr.next();
-            // deploy handler
+            // connect handler
             server.connectHandler(handler);
         }
 

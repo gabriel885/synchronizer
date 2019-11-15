@@ -53,7 +53,7 @@ public class ResponseAction extends Action {
     public String toJson() {
         return new JsonObject()
                 .put("type","RESPONSE")
-                .put("path",this.fileToResponse)
+                .put("path",this.fileToResponse.toString())
                 .put("isDir", this.isDir)
                 .put("checksum", this.checksum)
                 .put("timestamp", this.unixTime)

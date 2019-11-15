@@ -38,7 +38,7 @@ public class SendActionHandler implements ActionHandler<AsyncResult<NetSocket>> 
                     logger.debug(String.format("event %s failed writing to socket!", this.action.toString()));
                 }
             });
-            event.result().end(); // end handler
+            //event.result().end(); // end handler
         }
         else{
             logger.warn(event.cause());

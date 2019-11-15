@@ -8,11 +8,9 @@ import synchronizer.models.EventBusAddress;
 import synchronizer.models.SharedDataMapAddress;
 import synchronizer.verticles.storage.ActionReceiverVerticle;
 import synchronizer.verticles.storage.ActionSenderVerticle;
-import synchronizer.verticles.storage.SyncVerticle;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.concurrent.ThreadLocalRandom;
 
 // StorageApplication component responsible for deploying all
 // verticles regarding local file system alternations.
@@ -51,10 +49,6 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
                 vertx.deployVerticle(new ActionReceiverVerticle(myIpAddress, this.path, new EventBusAddress("incoming.actions"), new SharedDataMapAddress("local.path")));
             }
         });
-        vertx.setPeriodic( ThreadLocalRandom.current().nextInt(7000, 10000 + 1), v->{
-            vertx.deployVerticle(new SyncVerticle(this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("global.path"), new SharedDataMapAddress("local.path")));
-        });
-
     }
 
     @Override

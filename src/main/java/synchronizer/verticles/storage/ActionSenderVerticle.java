@@ -299,7 +299,7 @@ public class ActionSenderVerticle extends AbstractVerticle {
              * @param actionObject
              */
             public void publish(JsonObject actionObject){
-                logger.info(String.format("%s %s", ActionSenderVerticle.this.host, actionObject.toString()));
+                //logger.info(String.format("%s %s", ActionSenderVerticle.this.host, actionObject.toString()));
 
                 // calculate checksum and only if checksum differs publish to event bus
                 ActionSenderVerticle.this.producer.send(actionObject, reply->{

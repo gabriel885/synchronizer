@@ -62,10 +62,10 @@ public class TCPPeer extends NetPeer implements Protocol{
 
     /**
      * initialize tcp peer with net server options
-     * @param hostname
-     * @param port
-     * @param peers
-     * @param serverOptions
+     * @param hostname - my ip address
+     * @param port - port on which to listen (default is port 2020)
+     * @param peers - list of peers to connect
+     * @param serverOptions - server options
      * @throws Exception
      */
     public TCPPeer(String hostname, int port, Set<Peer> peers, NetServerOptions serverOptions) throws Exception {
@@ -91,6 +91,8 @@ public class TCPPeer extends NetPeer implements Protocol{
     public void start(){
 
         // connect to peers in network
+        //Future future =
+
         listen(serverHandlers);
         connect(clientHandlers);
 
@@ -114,7 +116,7 @@ public class TCPPeer extends NetPeer implements Protocol{
      * @return - ACK/NACK action object
      */
     public void broadcastAction(JsonObject action) {
-        logger.info(String.format("broadcasting to all peers %s",action.toString()));
+        logger.info(String.format("broadcasting to all peers: %s",action.toString()));
         for (String peerName: peers.keySet()){
             Peer peer = peers.get(peerName);
             connect(peer,new SendActionHandler(action));

@@ -62,8 +62,6 @@ public class ApplyIncomingActionsVerticle extends AbstractVerticle {
         // connect consumer
         this.producer = eb.publisher(incomingAddress.toString());
 
-//        this.tcpPeer.listen(new ReceiveActionHandler(this.path,vertx.fileSystem(),this.producer));
-
         // receive actions handler and produce to event bus
         this.tcpPeer.listen(handler->{
             if (handler instanceof NetSocket ){
@@ -82,6 +80,7 @@ public class ApplyIncomingActionsVerticle extends AbstractVerticle {
                     // don't block handler
                     handleAction(new Peer(socket.remoteAddress().host(),this.tcpPeer.peerPort),actionReceived);
                 });
+
             }
         });
     }
@@ -98,12 +97,24 @@ public class ApplyIncomingActionsVerticle extends AbstractVerticle {
 
         switch(actionType){
             case REQUEST:
+                logger.info("getting! response!!!!");
                 // send response
-                Buffer requestedBuffer = vertx.fileSystem().readFileBlocking(f.getFileName());
-                boolean isDir = Files.isDirectory(Paths.get(f.getFileName()));
-                JsonObject actionResponse = new JsonObject(new ResponseAction(Paths.get(f.getFileName()),isDir,requestedBuffer).toJson());
-                this.tcpPeer.sendAction(origin,actionResponse);
-                logger.info(String.format("Sent response %s  %s", actionResponse.toString(),origin.getHost()));
+                if (!actionReceived.containsKey("path")){
+                    break;
+                }
+                String path = actionReceived.getString("path");
+                // here is the blocking!
+                vertx.fileSystem().readFile(path, handler->{
+                    if (handler.succeeded()){
+                        Buffer requestedBuffer = handler.result();
+                        boolean isDir = Files.isDirectory(Paths.get(path));
+                        JsonObject actionResponse = new JsonObject(new ResponseAction(Paths.get(path),isDir,requestedBuffer).toJson());
+                        logger.info("Sending response %s", actionResponse.toString());
+                        this.tcpPeer.sendAction(origin,actionResponse);
+                        logger.info(String.format("Sent response %s  %s", actionResponse.toString(),origin.getHost()));
+                    }
+                });
+
                 return;
             default:
                 break;
