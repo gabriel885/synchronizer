@@ -9,7 +9,6 @@ import io.vertx.core.net.NetSocket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.models.EventBusAddress;
-import synchronizer.models.File;
 import synchronizer.models.Peer;
 import synchronizer.models.actions.Ack;
 import synchronizer.models.actions.ActionType;
@@ -28,120 +27,128 @@ public class ApplyIncomingActionsVerticle extends AbstractVerticle {
     private static final Logger logger = LogManager.getLogger(ApplyIncomingActionsVerticle.class);
 
     // monitorable path
-    private Path path;
-
+    private final Path path;
+    // event bus address to publish incoming actions
+    private final EventBusAddress incomingAddress;
+    // peer the actions are coming from
+    private final TCPPeer tcpPeer;
     // consume file system actions from event bus
     private MessageProducer<JsonObject> producer;
-
-    // event bus
-    private EventBus eb;
-
-    // event bus address to publish incoming actions
-    private EventBusAddress incomingAddress;
-
     // max number of retries sending to the event bus
-    private int MAX_RETRY=5;
-
+    private int MAX_RETRY = 5;
     // attempts made sending to the event bus
-    private int attempts=0;
-
-    // peer the actions are coming from
-    private TCPPeer tcpPeer;
+    private int attempts = 0;
 
 
     // event bus address to publish to
-    public ApplyIncomingActionsVerticle(Path path,TCPPeer tcpPeer, EventBusAddress incomingAddress) {
+    public ApplyIncomingActionsVerticle(Path path, TCPPeer tcpPeer, EventBusAddress incomingAddress) {
         this.incomingAddress = incomingAddress;
         this.tcpPeer = tcpPeer;
         this.path = path;
     }
 
     @Override
-    public void start(){
-        this.eb = vertx.eventBus();
+    public void start() {
+        // event bus
+        EventBus eb = vertx.eventBus();
+
         // connect consumer
         this.producer = eb.publisher(incomingAddress.toString());
 
         // receive actions handler and produce to event bus
-        this.tcpPeer.listen(handler->{
-            if (handler instanceof NetSocket ){
+        this.tcpPeer.listen(handler -> {
+            if (handler instanceof NetSocket) {
                 NetSocket socket = (NetSocket) handler; // will fail on runtime if handler is not a net socket
 
-                socket.handler(buffer->{
+                socket.handler(buffer -> {
                     // ignore empty buffers
-                    if (buffer == null || buffer.toString().isEmpty()){
+                    if (buffer == null || buffer.toString().isEmpty()) {
                         return;
                     }
                     // confirm buffer
                     socket.write(new Ack().bufferize());
-                    logger.info(String.format("received buffer %s from %s", buffer.toString(),socket.remoteAddress()));
-                    // confirm message
-                    JsonObject actionReceived =  buffer.toJsonObject();
-                    // don't block handler
-                    handleAction(new Peer(socket.remoteAddress().host(),this.tcpPeer.peerPort),actionReceived);
-                });
 
+                    logger.info(String.format("received buffer %s from %s", buffer.toString(), socket.remoteAddress()));
+                    // confirm message
+                    JsonObject actionReceived = buffer.toJsonObject();
+
+                    // don't block handler
+                    handleAction(new Peer(socket.remoteAddress().host(), this.tcpPeer.peerPort), actionReceived);
+
+                });
             }
         });
     }
 
-    private void handleAction(Peer origin, JsonObject actionReceived){
+    private void handleAction(Peer origin, JsonObject actionReceived) {
 
         // Append action's path to relative monitorable path
         actionReceived = absolutizePath(actionReceived);
 
-
         ActionType actionType = ActionType.getType(actionReceived.getString("type"));
 
-        File f = new File(actionReceived);
+        //File f = new File(actionReceived);
 
-        switch(actionType){
-            case REQUEST:
-                logger.info("getting! response!!!!");
-                // send response
-                if (!actionReceived.containsKey("path")){
-                    break;
-                }
+        if (actionType == ActionType.REQUEST) {
+            logger.info("getting! response!!!!");
+            // send response
+            if (actionReceived.containsKey("path")) {
                 String path = actionReceived.getString("path");
-                // here is the blocking!
-                vertx.fileSystem().readFile(path, handler->{
-                    if (handler.succeeded()){
+
+                vertx.fileSystem().readFile(path, handler -> {
+                    if (handler.succeeded()) {
                         Buffer requestedBuffer = handler.result();
                         boolean isDir = Files.isDirectory(Paths.get(path));
-                        JsonObject actionResponse = new JsonObject(new ResponseAction(Paths.get(path),isDir,requestedBuffer).toJson());
+                        JsonObject actionResponse = new JsonObject(new ResponseAction(Paths.get(path), isDir, requestedBuffer).toJson());
                         logger.info("Sending response %s", actionResponse.toString());
-                        this.tcpPeer.sendAction(origin,actionResponse);
-                        logger.info(String.format("Sent response %s  %s", actionResponse.toString(),origin.getHost()));
+                        this.tcpPeer.sendAction(origin, actionResponse);
+                        logger.info(String.format("Sent response %s  %s", actionResponse.toString(), origin.getHost()));
                     }
                 });
-
-                return;
-            default:
-                break;
+            }
         }
-        this.producer.send(actionReceived);
+        this.producer.send(actionReceived, handler->{
+            // if responded with nack - request action
+            if (handler.succeeded() && (handler.result().body() instanceof String)){
+                String stringJsonResponse = (String) handler.result().body();
+                JsonObject jsonResponse = new JsonObject(stringJsonResponse);
+                ActionType responseActionType = ActionType.getType(jsonResponse.getString("type"));
+                // check action type
+                // if nack received send peer nack on message
+                if (responseActionType == ActionType.NACK){
+                //    this.tcpPeer.sendAction(origin,new JsonObject(new Nack().toJson()));
+                    logger.info("received invalid message !");
+                }
+
+            }
+
+        });
     }
+
     /**
      * searches for "path" key in json object and strips absolute path from monitorable path
-     * @param action
+     *
+     * @param action - jsonObject action
      * @return
      */
-    private JsonObject absolutizePath(JsonObject action){
-        if (action==null){
+    private JsonObject absolutizePath(JsonObject action) {
+        // type safety
+        if (action == null) {
             return null;
         }
-        if (!action.containsKey("path")){
+        // check key
+        if (!action.containsKey("path")) {
             return action;
         }
 
         String relativeFile = action.getString("path");
-        Path absoluteFile = Paths.get(this.path.toString(),relativeFile);
-        action.put("path",absoluteFile.toString());
+        Path absoluteFile = Paths.get(this.path.toString(), relativeFile);
+        action.put("path", absoluteFile.toString());
         return action;
     }
 
     @Override
-    public void stop(){
+    public void stop() {
 
     }
 }

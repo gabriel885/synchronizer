@@ -5,83 +5,81 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.Shareable;
 import synchronizer.models.actions.Action;
 
-public class File implements Shareable {
+class File implements Shareable {
 
     // filename
-    private String fileName;
+    private final String fileName;
 
     // origin  modification timestamp (unix time)
-    private long timestamp; // modified by local user, unix time
+    private final long timestamp; // modified by local user, unix time
 
     // file's checksum
-    private String checkSum;
+    private final String checkSum;
 
     // file's buffer
-    private Buffer buffer;
+    private final Buffer buffer;
 
-    // true if file is a directory
-    private boolean isDir;
-
-    public File(String fileName, boolean isDir,  String checksum, long timestamp, Buffer buffer){
+    public File(String fileName, boolean isDir, String checksum, long timestamp, Buffer buffer) {
         this.fileName = fileName;
-        this.isDir = isDir;
+        // true if file is a directory
         this.checkSum = checksum;
         this.timestamp = timestamp;
         this.buffer = buffer;
     }
 
     // parse json action to a file
-    public File(JsonObject action){
-        if(action==null || !Action.valid(action)){
-            this.checkSum="";
-            this.timestamp=0;
-            this.fileName="";
+    public File(JsonObject action) {
+        if (action == null || Action.isValid(action)) {
+            this.checkSum = "";
+            this.timestamp = 0;
+            this.fileName = "";
             this.buffer = Buffer.buffer();
             return;
         }
-        if (action.getString("path") == null){
+        if (action.getString("path") == null) {
             this.fileName = "";
-        }
-        else{
+        } else {
             this.fileName = action.getString("path");
         }
-        if (action.getString("checksum") == null){
+        if (action.getString("checksum") == null) {
             this.checkSum = "";
-        }
-        else{
+        } else {
             this.checkSum = action.getString("checksum");
         }
-        if (action.getLong("timestamp") == null){
+        if (action.getLong("timestamp") == null) {
             this.timestamp = 0;
-        }
-        else{
+        } else {
             this.timestamp = action.getLong("timestamp");
         }
-        if (action.getString("buffer") == null){
+        if (action.getString("buffer") == null) {
             this.buffer = Buffer.buffer();
-        }
-        else{
+        } else {
             this.buffer = Buffer.buffer(action.getString("buffer"));
         }
     }
 
-    public String getFileName(){
+    private String getFileName() {
         return this.fileName;
     }
-    public String getChecksum(){
-        if (this.checkSum==null){
+
+    private String getChecksum() {
+        if (this.checkSum == null) {
             return "";
         }
         return this.checkSum;
     }
-    public long getTimeStamp(){
+
+    private long getTimeStamp() {
         return this.timestamp;
     }
-    public Buffer getBuffer() { return this.buffer; }
+
+    private Buffer getBuffer() {
+        return this.buffer;
+    }
 
     @Override
-    public String toString(){
-        return String.format("path:%s\n checksum:%s\n timestamp:%d\n buffer:%s\n",this.getFileName(),this.getChecksum(),this.getTimeStamp(),this.getBuffer().toString());
+    public String toString() {
+        return String.format("path:%s\n checksum:%s\n timestamp:%d\n buffer:%s\n", this.getFileName(), this.getChecksum(), this.getTimeStamp(), this.getBuffer().toString());
     }
 
 }

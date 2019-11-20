@@ -14,7 +14,8 @@ run:
 	@java -jar target/synchronizer-jar-with-dependencies.jar -p /Users/gabrielmunits/opt/dir -d 172.18.0.10:2020 172.18.0.15:2020
 
 create-network:
-	@docker
+	@docker network create --subnet=172.18.0.0/16 mynet123
+
 # build docker image
 build-docker:
 	@docker build . -t synchronizer:latest

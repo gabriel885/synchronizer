@@ -25,8 +25,6 @@ public class PublishOutcomingActionsVerticle extends AbstractVerticle {
 
     // local monitorable path
     private Path path;
-    // consume file system actions from event bus
-    private MessageConsumer<JsonObject> consumer;
 
     // event bus outcoming address
     private EventBusAddress outcomingAddress;
@@ -36,7 +34,6 @@ public class PublishOutcomingActionsVerticle extends AbstractVerticle {
 
 
     /**
-     *
      * @param outcomingAddress - event bus address of outcoming events address
      */
     public PublishOutcomingActionsVerticle(Path path, TCPPeer tcpPeer, EventBusAddress outcomingAddress) {
@@ -48,21 +45,30 @@ public class PublishOutcomingActionsVerticle extends AbstractVerticle {
     }
 
     @Override
-    public void start(){
+    public void start() {
 
         EventBus eb = vertx.eventBus();
 
         // connect consumer
-        this.consumer = eb.consumer(outcomingAddress.toString(), actionReceived->{
+        // confirm message
+        // temp action object for further modifications
+        //event.result().write(new DeleteAction());
+        // broadcast only relative path!!
+        // broadcast only relative path!!
+        // broadcast only relative path!!
+        // broadcast only relative path!!
+        // consume file system actions from event bus
+        MessageConsumer<JsonObject> consumer = eb.consumer(outcomingAddress.toString(), actionReceived -> {
+
             // confirm message
-           actionReceived.reply(new Ack());
+            actionReceived.reply(new Ack());
 
             ActionType actionType = ActionType.getType(actionReceived.body().getString("type"));
 
             // temp action object for further modifications
             JsonObject action;
 
-            switch (actionType){
+            switch (actionType) {
                 case DELETE:
                     //event.result().write(new DeleteAction());
                     logger.debug("broadcasting delete action");
@@ -89,7 +95,7 @@ public class PublishOutcomingActionsVerticle extends AbstractVerticle {
                     tcpPeer.broadcastAction(relativizePath(action));
                     break;
                 default:
-                    logger.debug(String.format("%s received unknown action type from message: %s",this.tcpPeer.getHost(),actionReceived.body().toString()));
+                    logger.debug(String.format("%s received unknown action type from message: %s", this.tcpPeer.getHost(), actionReceived.body().toString()));
                     break;
             }
         });
@@ -97,20 +103,21 @@ public class PublishOutcomingActionsVerticle extends AbstractVerticle {
 
     /**
      * searches for "path" key in json object and strips absolute path from monitorable path
+     *
      * @param action
      * @return
      */
-    private JsonObject relativizePath(JsonObject action){
-        if (action.getString("path") == null || Paths.get(action.getString("path"))==null ){
+    private JsonObject relativizePath(JsonObject action) {
+        if (action.getString("path") == null || Paths.get(action.getString("path")) == null) {
             return null;
         }
         Path relativeFile = this.path.relativize(Paths.get(action.getString("path")));
-        action.put("path",relativeFile.toString());
+        action.put("path", relativeFile.toString());
         return action;
     }
 
     @Override
-    public void stop(){
+    public void stop() {
 
     }
 }

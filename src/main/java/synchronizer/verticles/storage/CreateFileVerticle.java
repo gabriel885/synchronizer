@@ -9,59 +9,58 @@ import org.apache.logging.log4j.Logger;
 import java.nio.file.Path;
 
 
-public class CreateFileVerticle extends AbstractVerticle {
+class CreateFileVerticle extends AbstractVerticle {
 
     // logger
     private static final Logger logger = LogManager.getLogger(CreateFileVerticle.class);
 
     // file's path to create
-    private Path fileToCreate;
+    private final Path fileToCreate;
 
     // files buffer
-    private Buffer fileBuffer;
+    private final Buffer fileBuffer;
 
     // true if file to create is a dir
-    private boolean isDir;
+    private final boolean isDir;
 
     // if created file is a directory - buffer is empty
-    public CreateFileVerticle(Path fileToCreate,  boolean isDir, Buffer fileBuffer){
+    public CreateFileVerticle(Path fileToCreate, boolean isDir, Buffer fileBuffer) {
         this.fileToCreate = fileToCreate;
         this.fileBuffer = fileBuffer;
         this.isDir = isDir;
     }
 
     @Override
-    public void start(Future<Void> startFuture){
+    public void start(Future<Void> startFuture) {
 
-        if (this.fileToCreate == null || this.fileToCreate.toString().isEmpty()){
+        if (this.fileToCreate == null || this.fileToCreate.toString().isEmpty()) {
             logger.info(String.format("Failed to create file %s", this.fileToCreate));
             startFuture.fail(String.format("Failed to create file %s", this.fileToCreate));
         }
 
         // if file exists - override it
-        if (vertx.fileSystem().existsBlocking(this.fileToCreate.toString())){
-            vertx.fileSystem().deleteRecursiveBlocking(this.fileToCreate.toString(),true);
+        if (vertx.fileSystem().existsBlocking(this.fileToCreate.toString())) {
+            vertx.fileSystem().deleteRecursiveBlocking(this.fileToCreate.toString(), true);
         }
 
         // check if sub directories exist
 
         // create dir
-        if (isDir){
+        if (isDir) {
             vertx.fileSystem().mkdirBlocking(this.fileToCreate.toString());
             logger.info(String.format("created dir %s", this.fileToCreate.toString()));
-        }
-        else{ // create file with buffer
-            // create all sub-path if they are missing
+        } else { // create file with buffer
+            // create all ancestors-path if they are missing
             vertx.fileSystem().mkdirsBlocking(this.fileToCreate.getParent().toString());
+            // write blocking to file
             vertx.fileSystem().writeFileBlocking(this.fileToCreate.toString(), this.fileBuffer);
             logger.info(String.format("created file %s", this.fileToCreate.toString()));
         }
-
         startFuture.complete();
     }
 
     @Override
-    public void stop(){
+    public void stop() {
         logger.info("file creation verticle stopped!");
     }
 

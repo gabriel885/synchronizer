@@ -25,7 +25,7 @@ public class ResponseAction extends Action {
     // timestamp of action
     private long unixTime;
 
-    public ResponseAction(Path fileToResponse,boolean isDir, Buffer responseBuffer){
+    public ResponseAction(Path fileToResponse, boolean isDir, Buffer responseBuffer) {
         super(ActionType.RESPONSE);
         this.fileToResponse = fileToResponse;
         this.isDir = isDir;
@@ -40,24 +40,25 @@ public class ResponseAction extends Action {
     }
 
     /**
-     *     {
-     *       "type": "RESPONSE",
-     *       "path": "/opt/dir/newFile.txt",
-     *       "checksum": "f8a6701de14ec3fcfd9f2fe595e9c9ed",
-     *       "timestamp": 1572740322,
-     *       "buffer": "this is content of requested file"
-     *     }
+     * {
+     * "type": "RESPONSE",
+     * "path": "/opt/dir/newFile.txt",
+     * "checksum": "f8a6701de14ec3fcfd9f2fe595e9c9ed",
+     * "timestamp": 1572740322,
+     * "buffer": "this is content of requested file"
+     * }
+     *
      * @return
      */
     @Override
     public String toJson() {
         return new JsonObject()
-                .put("type","RESPONSE")
-                .put("path",this.fileToResponse.toString())
+                .put("type", "RESPONSE")
+                .put("path", this.fileToResponse.toString())
                 .put("isDir", this.isDir)
                 .put("checksum", this.checksum)
                 .put("timestamp", this.unixTime)
-                .put("buffer",this.bufferToResponse)
+                .put("buffer", this.bufferToResponse.toString())
                 .toString();
     }
 }

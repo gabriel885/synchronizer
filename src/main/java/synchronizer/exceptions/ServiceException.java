@@ -1,16 +1,19 @@
 package synchronizer.exceptions;
 
-public class ServiceException extends Exception {
-    public ServiceException() {
+class ServiceException extends Exception {
+    ServiceException() {
         super();
     }
-    public ServiceException(String message) {
+
+    ServiceException(String message) {
         super(message);
     }
-    public ServiceException(Throwable cause) {
+
+    ServiceException(Throwable cause) {
         super(cause);
     }
-    public ServiceException(String message, Throwable cause){
+
+    ServiceException(String message, Throwable cause) {
         super(message, cause);
     }
 }

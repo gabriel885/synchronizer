@@ -1,3 +1,5 @@
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import synchronizer.tasks.Task;
 import utils.RandomString;
 
@@ -12,7 +14,10 @@ import java.util.concurrent.TimeUnit;
  * Usage - new ImitateFileCreations();
  * Used for initial file creation for testing
  */
-public class ImitateFileCreations extends Task {
+class ImitateFileCreations extends Task {
+
+    // logger
+    private static final Logger logger = LogManager.getLogger(ImitateFileCreations.class);
 
     private static final int MAX_DELAY = 4; // maximum file creation delay
     private static final int MIN_DELAY = 2; // minimum file creation delay
@@ -22,17 +27,17 @@ public class ImitateFileCreations extends Task {
     private boolean randomName = false;
 
     private String[] filenames;
-    private Random randomSleep = new Random();
+    private final Random randomSleep = new Random();
 
-    private Path path;
+    private final Path path;
 
     /**
      * Spawn file creation threads. Sequent execution is NOT guaranteed
      * In order to guarantee sequent execution, must be run in SequentServices pool.
      * File name will be chosen randomly
-     * @param numFilesToCreate
+     * @param numFilesToCreate - number of files to create
      */
-    public ImitateFileCreations(Path path, int numFilesToCreate){
+    private ImitateFileCreations(Path path, int numFilesToCreate){
         this.path = path;
         this.numFilesToCreate = numFilesToCreate;
         this.randomName = true;
@@ -43,7 +48,7 @@ public class ImitateFileCreations extends Task {
      * In order to guarantee sequent execution, must be run in SequentServices pool.
      * @param filenames - filenames to create
      */
-    public ImitateFileCreations(Path path, String[] filenames){
+    private ImitateFileCreations(Path path, String[] filenames){
         this.path = path;
         this.numFilesToCreate = filenames.length;
         this.randomName = false;
@@ -69,7 +74,7 @@ public class ImitateFileCreations extends Task {
                     file.createNewFile();
                     TimeUnit.SECONDS.sleep(randomSleep.nextInt(MAX_DELAY)+MIN_DELAY);
                 } catch (Exception e) {
-                    System.out.println(e);
+                    logger.warn(e);
                 }
             }
         }).start();
@@ -77,10 +82,10 @@ public class ImitateFileCreations extends Task {
 
     /**
      * Wrap filenames with the object's path
-     * @param filenames
-     * @return
+     * @param filenames - filenames
+     * @return filenames wrapped with path
      */
-    public String[] wrapWithPath(String[] filenames){
+    private String[] wrapWithPath(String[] filenames){
         for(int i=0;i<filenames.length;i++){
             filenames[i] = Paths.get(this.path.toString(),filenames[i]).toString();
         }

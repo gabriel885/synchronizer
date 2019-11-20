@@ -16,7 +16,7 @@ public class RequestAction extends Action {
 
     private boolean isDir;
 
-    public RequestAction(String fileToRequest, boolean isDir){
+    public RequestAction(String fileToRequest, boolean isDir) {
         super(ActionType.REQUEST);
         this.isDir = isDir;
         this.fileToRequest = fileToRequest;
@@ -29,19 +29,20 @@ public class RequestAction extends Action {
     }
 
     /**
-     *     {
-     *       "type": "REQUEST",
-     *       "path": "/opt/dir/newFile.txt",
-     *       "timestamp": 1572740322
-     *     }
+     * {
+     * "type": "REQUEST",
+     * "path": "/opt/dir/newFile.txt",
+     * "timestamp": 1572740322
+     * }
+     *
      * @return
      */
     @Override
     public String toJson() {
         return new JsonObject()
-                .put("type","REQUEST")
-                .put("path",this.fileToRequest)
+                .put("type", "REQUEST")
+                .put("path", this.fileToRequest)
                 .put("isDir", this.isDir)
-                .put("timestamp",this.unixTime).toString();
+                .put("timestamp", this.unixTime).toString();
     }
 }

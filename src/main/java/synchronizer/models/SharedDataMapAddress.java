@@ -6,20 +6,25 @@ import java.util.Set;
 // represent vertx.SharedData local map address
 public class SharedDataMapAddress {
 
+    private static Set<String> registeredMaps = new HashSet<>();
     private String mapName;
-    protected static Set<String> registeredMaps = new HashSet<>();
 
-    public SharedDataMapAddress(String mapName){
-        this.registeredMaps.add(mapName);
+    public SharedDataMapAddress(String mapName) {
+        registeredMaps.add(mapName);
         this.mapName = mapName;
     }
 
     /**
      * returning the actual reference to registered SharedData maps
+     *
      * @return
      */
-    public Set<String> getRegisteredMaps(){ return registeredMaps; }
+    public Set<String> getRegisteredMaps() {
+        return registeredMaps;
+    }
 
     @Override
-    public String toString(){ return this.mapName; }
+    public String toString() {
+        return this.mapName;
+    }
 }

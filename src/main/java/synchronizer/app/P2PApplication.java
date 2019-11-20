@@ -1,5 +1,6 @@
 package synchronizer.app;
 
+import io.vertx.core.VertxException;
 import io.vertx.core.net.NetClientOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,10 +25,10 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     private static final Logger logger = LogManager.getLogger(P2PApplication.class);
 
     // reconnect attempts to each non-responding peer
-    private static final int reconnectAttemps = 10;
+    private static final int reconnectAttemps = 3;
 
     // reconnect attempt interval
-    private static final int reconnectInterval = 5000; // 5 seconds
+    private static final int reconnectInterval = 2000; // 5 seconds
 
     // When you deploy another server on the same host and port as an existing server it
     // doesn’t actually try and create a new server listening on the same host/port.
@@ -39,52 +40,60 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
 
     // peer's listening port
     private final int port = 2020;
-
-    // synchronizer.verticles.p2p application's peers
-    private Set<Peer> peers = new HashSet<>();
-
+    // local monitorable path
+    private final Path path;
     // tcp peer of current host
     private TCPPeer tcpPeer;
 
-    // local monitorable path
-    private Path path;
-
-    public P2PApplication(String path,String []devices) throws Exception{
+    public P2PApplication(String path, String[] devices) throws Exception {
 
         // peers names
-        for (String device: devices) {
+        // synchronizer.verticles.p2p application's peers
+        Set<Peer> peers = new HashSet<>();
+        for (String device : devices) {
             String host = device.split(":")[0];
             int port = Integer.parseInt(device.split(":")[1]);
-            peers.add(new Peer(host,port));
+            peers.add(new Peer(host, port));
         }
 
         // exclude myself from list of peers
         Iterator<Peer> itr = peers.iterator();
         // log peers
-        while (itr.hasNext()){
+        while (itr.hasNext()) {
             Peer other = itr.next();
-            if (other.compareTo(new Peer(myIpAddress,port))==1){
+            if (other.compareTo(new Peer(myIpAddress, port)) == 1) {
                 itr.remove();
             }
         }
         this.path = Paths.get(path);
-        this.tcpPeer = new TCPPeer(myIpAddress, port, peers, new NetClientOptions().setReconnectAttempts(reconnectAttemps).setReconnectInterval(reconnectInterval));
+        this.tcpPeer = new TCPPeer(myIpAddress, port, peers, new NetClientOptions()
+                .setReconnectAttempts(reconnectAttemps)
+                .setReconnectInterval(reconnectInterval));
     }
 
     /**
      * start synchronizer.verticles.p2p application
-     * @throws Exception
      */
-    @Override
     public void start() throws Exception {
         // deploy tcp peer
-        vertx.deployVerticle(tcpPeer, deployResult->{
-            if (deployResult.succeeded()){
+        vertx.deployVerticle(tcpPeer, deployResult -> {
+            // tcp peer deployed successfully
+            if (deployResult.succeeded()) {
                 // publish local events to all peers
-                vertx.deployVerticle(new PublishOutcomingActionsVerticle(this.path ,this.tcpPeer,new EventBusAddress("outcoming.actions")));
+                vertx.deployVerticle(new PublishOutcomingActionsVerticle(this.path, this.tcpPeer, new EventBusAddress("outcoming.actions")), deployResult1 -> {
+                    // handle deploy results
+                    if (!deployResult1.succeeded()) {
+                        throw new VertxException(deployResult1.cause());
+                    }
+                });
                 // apply global events locally
-                vertx.deployVerticle(new ApplyIncomingActionsVerticle(this.path ,this.tcpPeer,new EventBusAddress("incoming.actions")));
-            }else{
+                vertx.deployVerticle(new ApplyIncomingActionsVerticle(this.path, this.tcpPeer, new EventBusAddress("incoming.actions")), deployResult2 -> {
+                    // handle deploy results
+                    if (!deployResult2.succeeded()) {
+                        throw new VertxException(deployResult2.cause());
+                    }
+                });
+            } else {
                 logger.error(deployResult.cause());
             }
         });
@@ -103,11 +112,12 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
 
     /**
      * print host and port of machine the application is running on
+     *
      * @return
      */
     @Override
-    public String toString(){
-        return String.format("%s:%d",myIpAddress, this.port);
+    public String toString() {
+        return String.format("%s:%d", myIpAddress, this.port);
     }
 
 }

@@ -16,7 +16,7 @@ import java.nio.file.Paths;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TestCreateFile {
+class TestCreateFile {
 
     // logger
     private static final Logger logger = LogManager.getLogger(TestCreateFile.class);
@@ -34,11 +34,11 @@ public class TestCreateFile {
     }
 
     @Before
-    public void perpare(TestContext context){
+    void perpare(TestContext context){
 
     }
     @Test
-    public void testFileCreationOverride(){
+    void testFileCreationOverride(){
 
         Path fileToCreate = Paths.get(testDir,genRandomString.nextString()+".txt");
         Buffer buffer = Buffer.buffer().appendString("old content");
@@ -63,7 +63,7 @@ public class TestCreateFile {
 
     }
     @Test
-    public void testFileCreation(){
+    void testFileCreation(){
         Vertx vertx = Vertx.vertx();
         Path fileToCreate = Paths.get(testDir,genRandomString.nextString()+".txt");
         Buffer buffer = Buffer.buffer().appendString("new content");
@@ -88,7 +88,7 @@ public class TestCreateFile {
      * test file creation inside a directory that does not exist locally
      */
     @Test
-    public void testFileCreationOnMissingDirectory(){
+    void testFileCreationOnMissingDirectory(){
 
         Vertx vertx = Vertx.vertx();
         String testSubDir = genRandomString.nextString();
@@ -115,7 +115,7 @@ public class TestCreateFile {
 
     }
     @Test
-    public void testDirCreation(){
+    void testDirCreation(){
         Path fileToCreate = Paths.get(testDir,genRandomString.nextString());
         Buffer buffer = Buffer.buffer(); // dir has empty buffer
         // deploy create verticle and check creations upon deploy complete

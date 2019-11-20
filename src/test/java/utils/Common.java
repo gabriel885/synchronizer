@@ -7,7 +7,7 @@ import java.util.Random;
 /**
  *
  */
-public class Common {
+class Common {
 
     public static final String SYS_LINE_SEP = System.getProperty("line.separator");
 
@@ -15,14 +15,14 @@ public class Common {
         return i * 1_000_000_000; // en.wikipedia.org/wiki/Nano- says 1E-9,
     }
 
-    public static Random r = new Random();
+    private static final Random r = new Random();
     public static int randInt(int bound) { return r.nextInt(bound); }
 
     /* these are the ports that the router is configured to forward to me */
     public static final int PORT_MIN = 3000;
     public static final int PORT_MAX = 3500;
 
-    public static final int NUM_CHUNK_BYTES = 1 << 13; // 8KB
+    private static final int NUM_CHUNK_BYTES = 1 << 13; // 8KB
 
     /* chars have 2 bytes
      * http://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html */

@@ -50,20 +50,20 @@ between multiple computers.
 
 ### How to compile and run project
 1) Compile
-```bash
+``` bash
 mvn package
 ```
 2) Run
-```bash
+``` bash
 java -jar target/synchronizer-jar-with-dependencies.jar -p /opt/dir -d 172.18.0.10:2020 172.18.0.15:2020
 ```
 Or (using makefile) running 4 docker containers
-```bash
+``` bash
 make build-docker
 make -j run-all
 ```
 Execute bash inside containers and manipulate monitorable path!
-```bash
+``` bash
 docker exec container-name-1 /bin/bash
 docker exec container-name-2 /bin/bash
 
@@ -71,7 +71,7 @@ docker exec container-name-2 /bin/bash
 # Actions schemes:
 
 - Modify:
-```json
+``` json
     {
       "type": "MODIFY",
       "checksum": "edfdcfd4e646fe736caa2825226bf33f",
@@ -82,7 +82,7 @@ docker exec container-name-2 /bin/bash
     }  
  ```
 - Create:
-```json
+``` json
     {
       "type": "CREATE",
       "path": "/opt/dir/newFile.txt",
@@ -93,7 +93,7 @@ docker exec container-name-2 /bin/bash
     }    
 ```
 - Delete:
-```json
+``` json
     {
       "type": "DELETE",
       "path": "/opt/dir/newFile.txt",
@@ -102,7 +102,7 @@ docker exec container-name-2 /bin/bash
     }
 ```
 - Request:
-```json
+``` json
     {
       "type": "REQUEST",
       "path": "/opt/dir/newFile.txt",
@@ -111,7 +111,7 @@ docker exec container-name-2 /bin/bash
     }
 ```
 - Response:
-```json
+``` json
     {
       "type": "RESPONSE",
       "path": "/opt/dir/newFile.txt",
@@ -174,7 +174,7 @@ docker exec container-name-2 /bin/bash
 ##### StorageApplication
 
 * __Scan periodically file system__
-```java
+``` java
     // scan local file system path structure every 10 seconds.
     vertx.setPeriodic(10000,v->{
         vertx.deployVerticle(new LocalFileSystemWalkerVerticle(path));
@@ -183,7 +183,7 @@ docker exec container-name-2 /bin/bash
 
 ##### P2PApplication
 * Add TCP peer to the network
-```java
+``` java
     // add peer on host 10.0.0.5 and listening port 2017
     TCPPeer tcpPeer = new TCPPeer(myHost,port,new NetClientOptions().setReconnectAttempts(5).setReconnectInterval(5000));
    
@@ -203,7 +203,7 @@ docker exec container-name-2 /bin/bash
 ```
 
 * Create client-server handlers for TCP peer (listening for incoming actions from other peers)
-```java
+``` java
     private Handlers serverHandlers = new Handlers(event -> {
         // dummy handler
     });
@@ -217,7 +217,7 @@ docker exec container-name-2 /bin/bash
 __Important__: after tcpPeer is deployed it is not allowed to add client-server handlers.
      
 ### Makefile
-```bash
+``` bash
 # build maven project
 build:
 	@mvn package
@@ -256,12 +256,12 @@ kill:
 #### Demo Time!
 
 1) Create docker network
-```bash
+``` bash
 # class B subnet, broadcast 172.18.255.255
 docker network create --subnet=172.18.0.0/16 mynet123
 ```
 2) Pre-Define peers IP addresses and ports
-```bash
+``` bash
 172.18.0.10:2020
 172.18.0.15:2020
 ```
@@ -269,11 +269,11 @@ docker network create --subnet=172.18.0.0/16 mynet123
 3) Run docker containers with "synchronizer" software
 
 Client 1:
-```bash
+``` bash
 docker run --net mynet123 --ip 172.18.0.10 -it --rm synchronizer:latest  
 ```
 Client 2:
-```bash
+``` bash
 docker run --net mynet123 --ip 172.18.0.15 -it --rm synchronizer:latest  
 ```
 

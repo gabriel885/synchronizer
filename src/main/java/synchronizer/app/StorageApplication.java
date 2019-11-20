@@ -23,28 +23,28 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
     private Path path;
 
 
-    public StorageApplication(String pathString) throws Exception{
+    public StorageApplication(String pathString) throws Exception {
         // parse application arguments and initialize synchronizer.verticles.storage application stuff
         File dirPath = new File(pathString);
-        if (!dirPath.exists()){
-            throw new PathNotFound(String.format("Path '%s' not found",dirPath));
+        if (!dirPath.exists()) {
+            throw new PathNotFound(String.format("Path '%s' not found", dirPath));
         }
-        if(!dirPath.isDirectory()){
-            throw new PathNotDirectory(String.format("Path %s must be a directory",dirPath));
+        if (!dirPath.isDirectory()) {
+            throw new PathNotDirectory(String.format("Path %s must be a directory", dirPath));
         }
         this.path = dirPath.toPath();
     }
 
     /**
      * start synchronizer.verticles.storage application
+     *
      * @throws Exception
      */
-    @Override
-    public void start() throws Exception {
-        logger.warn(String.format("%s: starting Storage application on path %s",myIpAddress, this.path.toString()));
+    public void start() {
+        logger.warn(String.format("%s: starting Storage application on path %s", myIpAddress, this.path.toString()));
 
-        vertx.deployVerticle(new ActionSenderVerticle(myIpAddress,this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("local.path")), deployResult1->{
-            if (deployResult1.succeeded()){
+        vertx.deployVerticle(new ActionSenderVerticle(myIpAddress, this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("local.path")), deployResult1 -> {
+            if (deployResult1.succeeded()) {
                 // deploy all synchronizer.verticles.storage application verticles
                 vertx.deployVerticle(new ActionReceiverVerticle(myIpAddress, this.path, new EventBusAddress("incoming.actions"), new SharedDataMapAddress("local.path")));
             }
@@ -52,7 +52,7 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
     }
 
     @Override
-    public void kill(){
+    public void kill() {
         logger.warn("Storage application shutting down...");
         stachosticTasks.shutdownNow();
         sequentTasks.shutdownNow();

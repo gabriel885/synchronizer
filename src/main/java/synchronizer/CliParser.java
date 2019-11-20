@@ -7,63 +7,58 @@ import org.apache.logging.log4j.Logger;
 /**
  * parse and validate command line arguments
  */
-public class CliParser {
+class CliParser {
 
     // logger
     private static final Logger logger = LogManager.getLogger(CliParser.class);
-
     // cli parser
-    private CommandLineParser parser;
-
-    // cli
-    private CommandLine cmd;
-
+    private final CommandLineParser parser;
     // cli options
-    private Options cliOptions;
-
-    // cli formatter
-    private HelpFormatter formatter;
-
-    // path option
-    Option pathCliOption = new Option("p","path", true, "path to synchronize with peers. example: /opt/dir");
-
-    // devices option (peers to connect the synchronizer.verticles.p2p network)
-    Option devicesCliOption = new Option("d","devices", true,"devices with port to connect the synchronizer.verticles.p2p network. examples: 10.0.0.1:4321, 10.0.0.2:2020 10.0.0.0.5:2020. NOTE: port is set to default to 2020");
+    private final Options cliOptions;
 
 
-    //String [] devices = cmd.getOptionValues("devices");
+    public CliParser() {
 
-    public CliParser(){
         this.parser = new DefaultParser();
-        this.formatter = new HelpFormatter();
+        // cli formatter
+        HelpFormatter formatter = new HelpFormatter();
         this.cliOptions = new Options();
 
         // path options
-        this.pathCliOption.setRequired(true);
+        // path option
+        Option pathCliOption = new Option("p", "path", true, "path to synchronize with peers. example: /opt/dir");
+        pathCliOption.setRequired(true);
 
         // devices options
-        this.devicesCliOption.setRequired(true); // peers to connect the network (must be set)
-        this.devicesCliOption.setArgs(this.devicesCliOption.UNLIMITED_VALUES); // unlimited number of devices in synchronizer.verticles.p2p network
+        // devices option (peers to connect the synchronizer.verticles.p2p network)
+        Option devicesCliOption = new Option("d", "devices", true, "devices with port to connect the synchronizer.verticles.p2p network. examples: 10.0.0.1:4321, 10.0.0.2:2020 10.0.0.0.5:2020. NOTE: port is set to default to 2020");
+        devicesCliOption.setRequired(true); // peers to connect the network (must be set)
+        devicesCliOption.setArgs(Option.UNLIMITED_VALUES); // unlimited number of devices in synchronizer.verticles.p2p network
+
 
         // add options to parser
         this.cliOptions.addOption(pathCliOption);
         this.cliOptions.addOption(devicesCliOption);
 
         // print usage
-        this.formatter.printHelp("Synchronizer. A tool to synchronize files between computers",cliOptions);
+        formatter.printHelp("Synchronizer. A tool to synchronize files between computers", cliOptions);
 
     }
 
     /**
      * parse command line arguments
-     * @param args
-     * @return
-     * @throws IllegalArgumentException
+     *
+     * @param args - program arguments
+     * @return command line object
+     * @throws IllegalArgumentException - if illegal number of arguments or arguments was provided
      */
-    public CommandLine parse(String [] args) throws IllegalArgumentException{
-        try{
+    public CommandLine parse(String[] args) throws IllegalArgumentException {
+        // cli
+        CommandLine cmd;
+
+        try {
             cmd = parser.parse(cliOptions, args);
-        } catch (Exception e){
+        } catch (Exception e) {
             // parse exception IllegalNumberOfArgument equivalent
             logger.error(e);
             throw new IllegalArgumentException(e);

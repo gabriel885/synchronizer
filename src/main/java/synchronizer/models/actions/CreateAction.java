@@ -6,25 +6,25 @@ import synchronizer.models.Checksum;
 
 import java.nio.file.Path;
 
-/** TODO: make class static!!
- *
+/**
+ * TODO: make class static!!
  */
 public class CreateAction extends Action {
 
     // local file created
-    private Path fileToCreate;
+    private final Path fileToCreate;
 
     // true if tile is a dir
-    private boolean isDir;
+    private final boolean isDir;
 
     // file buffer
-    private Buffer fileBuffer;
+    private final Buffer fileBuffer;
 
     // created file checksum
-    private String checksum;
+    private final String checksum;
 
     // timestamp action was performed
-    private long unixTime;
+    private final long unixTime;
 
 
     public CreateAction(Path fileToCreate, boolean isDir, Buffer fileBuffer) {
@@ -38,23 +38,26 @@ public class CreateAction extends Action {
 
     /**
      * return created file path
+     *
      * @return local created file
      */
-    public String getCreatedFile(){
+    public String getCreatedFile() {
         return this.fileToCreate.toString();
     }
 
     /**
      * return file's checksum
-     * @return
+     *
+     * @return the checksum of a file
      */
-    public String getChecksum(){
+    public String getChecksum() {
         return this.checksum;
     }
 
     /**
      * return create action as buffer
-     * @return
+     *
+     * @return action as vertx buffer
      */
     @Override
     public Buffer bufferize() {
@@ -63,7 +66,8 @@ public class CreateAction extends Action {
 
     /**
      * return create actions as json string
-     * @return
+     *
+     * @return action as string
      */
     @Override
     public String toString() {
@@ -71,25 +75,26 @@ public class CreateAction extends Action {
     }
 
     /**
-     *     {
-     *       "type": "CREATE",
-     *       "path": "/opt/dir/newFile.txt",
-     *       "isDir": false,
-     *       "checksum": "a063e188310b9cf711b0e251a349afc1",
-     *       "timestamp": 1572730322,
-     *       "buffer" : "new content is added to new file"
-     *     }
-     * @return
+     * {
+     * "type": "CREATE",
+     * "path": "/opt/dir/newFile.txt",
+     * "isDir": false,
+     * "checksum": "a063e188310b9cf711b0e251a349afc1",
+     * "timestamp": 1572730322,
+     * "buffer" : "new content is added to new file"
+     * }
+     *
+     * @return action as json string
      */
     @Override
     public String toJson() {
         return new JsonObject()
-                .put("type","CREATE")
-                .put("path",this.fileToCreate.toString())
-                .put("checksum",this.checksum)
-                .put("timestamp",this.unixTime)
+                .put("type", "CREATE")
+                .put("path", this.fileToCreate.toString())
+                .put("checksum", this.checksum)
+                .put("timestamp", this.unixTime)
                 .put("isDir", this.isDir)
-                .put("buffer",this.fileBuffer.toString())
+                .put("buffer", this.fileBuffer.toString())
                 .toString();
     }
 

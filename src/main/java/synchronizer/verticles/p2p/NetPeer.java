@@ -1,7 +1,7 @@
 package synchronizer.verticles.p2p;
 
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
-import io.vertx.core.Vertx;
 import io.vertx.core.net.NetClient;
 import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.NetServer;
@@ -13,63 +13,59 @@ import synchronizer.models.Peer;
 import synchronizer.verticles.p2p.handlers.ActionHandler;
 import synchronizer.verticles.p2p.handlers.Handlers;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
 // binds NetServer and NetClient together as a NetPeer to listen for incoming socket connections (server)
 // and to connect to other peers (client)
-public class NetPeer extends AbstractPeer {
-
-    // logger
-    private static final Logger logger = LogManager.getLogger(NetPeer.class);
-
-    // peer name (host)
-    private String peerName;
-
-    // peer's port (default 2020)
-    protected int peerPort;
+class NetPeer extends AbstractVerticle {
 
     // peers to connect to
     // K: peer's host
     // V: peer model
-    protected static HashMap<String,Peer> peers = new HashMap<>();
-
+    static final HashMap<String, Peer> peers = new HashMap<>();
+    // logger
+    private static final Logger logger = LogManager.getLogger(NetPeer.class);
+    // client connection timeout
+    private static final int connectionTimeout = 3000;
     // tcp server
-    protected final NetServer server;
-
+    protected  NetServer server;
+    // tcp client
+    protected  NetClient client;
     // tcp server options
     protected final NetServerOptions serverOptions;
-
-    // tcp client
-    protected final NetClient client;
-
     // tcp client options
     protected final NetClientOptions clientOptions;
+    // peer's port (default 2020)
+    final int peerPort;
+    // peer name (host)
+    final String peerName;
 
     /**
-     *
-     * @param host - name of the peer
+     * @param host          - name of the peer
      * @param clientOptions - vertx net client options
      * @param serverOptions - vertx net server options
      */
-    public NetPeer(String host, int port, Set<Peer> peers,  NetClientOptions clientOptions, NetServerOptions serverOptions) throws Exception{
+    NetPeer(String host, int port, Set<Peer> peers, NetClientOptions clientOptions, NetServerOptions serverOptions) throws Exception {
 
         // validate peers in network
-        for(Peer peer: peers){
-            if (!validateHostAndPort(String.format("%s:%d", peer.getHost(), peer.getPort()))){
-                throw new ApplicationFailure(String.format("Failed to validate peer %s:%d", host ,port));
+        for (Peer peer : peers) {
+            if (validateHostAndPort(String.format("%s:%d", peer.getHost(), peer.getPort()))) {
+                throw new ApplicationFailure(String.format("Failed to validate peer %s:%d", host, port));
             }
         }
 
         // validate current net peer
-        if(!validateHostAndPort(String.format("%s:%d", host, port))){
-            throw new ApplicationFailure(String.format("Failed to validate peer %s:%d", host ,port));
+        if (validateHostAndPort(String.format("%s:%d", host, port))) {
+            throw new ApplicationFailure(String.format("Failed to validate peer %s:%d", host, port));
         }
 
         // assign other peers
-        for (Peer peer: peers){
-            this.peers.put(peer.getHost(),peer);
+        for (Peer peer : peers) {
+            NetPeer.peers.put(peer.getHost(), peer);
         }
 
         // assign current peer credentials
@@ -77,76 +73,119 @@ public class NetPeer extends AbstractPeer {
         this.peerPort = port;
 
         // set server host and peer (to allow incoming connections)
-        this.serverOptions = serverOptions.setHost(host).setPort(port);
-        this.clientOptions = clientOptions;
+        // log server activity
+        this.serverOptions = serverOptions.setHost(host).setPort(port).setLogActivity(true);
+        this.clientOptions = clientOptions.setConnectTimeout(connectionTimeout);
 
-        Vertx vertx = Vertx.vertx();
-        this.client = vertx.createNetClient(clientOptions);
-        this.server = vertx.createNetServer(serverOptions);
+    }
+
+    /**
+     * validate host and port
+     *
+     * @param string - representing a host and a port (e.g 172.100.100.2:2020)
+     * @return true if the host and the port are in correct format
+     */
+    private static boolean validateHostAndPort(String string) {
+        if (string==null || string.isEmpty()){
+            return false;
+        }
+        try {
+            // WORKAROUND: add any scheme to make the resulting URI isValid.
+            URI uri = new URI("my://" + string); // may throw URISyntaxException
+            if (uri.getHost() == null || uri.getPort() == -1) {
+                throw new URISyntaxException(uri.toString(),
+                        "URI must have host and port parts");
+            }
+            return false;
+
+        } catch (URISyntaxException ex) {
+            // validation failed
+            return true;
+        }
     }
 
     /**
      * listen to all peers with specific handler
+     *
      * @param handler
      * @return
      */
-    protected final NetServer listen(ActionHandler handler) {
+    final NetServer listen(ActionHandler handler) {
         NetServer server = vertx.createNetServer(serverOptions);
-        return server.connectHandler(handler).listen();
+        //noinspection unchecked
+        return server.connectHandler(handler).exceptionHandler(t -> {
+            logger.warn(t);
+        }).listen(v -> { // listening succeeded
+            if (v.succeeded()) {
+                logger.info(String.format("listening to all connections on port %s", v.result().actualPort()));
+            } else { // listening on port failed
+                logger.warn(v.cause());
+            }
+        });
     }
 
     /**
-     * connect listen handlers and listen on port 2020 for incoming connections
+     * connect multiple listening handlers to single server instance and listen on port 2020 for incoming connections
+     *
+     ** NOTE - server cannot assign a handler after listening, therefore for new handlers
+     *       a new server instance will be created, afterwards all the handlers will be
+     *       registered and the server will be listening (with serverOptions)
      * @param listenHandlers - server listening handlers
-     * @return
+     * @return NetServer instance for fluent api
      */
-    protected final Future<Void> listen(Handlers listenHandlers){
+    final NetServer listen(Handlers listenHandlers) {
         Future<Void> future = Future.future();
+
         NetServer server = vertx.createNetServer(serverOptions);
 
         // connect server handlers
         Iterator<ActionHandler> itr = listenHandlers.getHandlersIterator();
-        while(itr.hasNext()){
+        while (itr.hasNext()) {
             ActionHandler handler = itr.next();
             // connect handler
+            // TODO: check type assignment
             server.connectHandler(handler);
         }
 
         // listen on port
-        server.listen(res->{
+        server.listen(res -> {
             // this is handler
-            if (res.succeeded()){
+            if (res.succeeded()) {
                 logger.debug(String.format("%s is listening for connections from %s", toString(), peers.keySet().toString()));
                 future.complete();
-            }
-            else{
+            } else {
                 logger.warn(String.format("%s failed to listen for connections", toString()));
                 future.fail(res.cause());
             }
         });
 
-        return future;
+        return server;
     }
 
     /**
      * connect a handler to a specific peer
+     * NOTE - client cannot asssign a handler after connection, therefore for new handlers
+     * a new client instance will be created
      * @param handler
      */
-    protected final NetClient connect(Peer peer, ActionHandler handler){
+    final NetClient connect(Peer peer, ActionHandler handler) {
         NetClient client = vertx.createNetClient(clientOptions);
+        logger.info(String.format("connecting to peer: %s", peer.toString()));
         return client.connect(peer.getPort(), peer.getHost(), handler);
     }
+
     /**
      * Connect all client handlers to all listening peers in the network
+     *
      * @param connectHandlers - client listening handlers
      * @return
      */
-    protected final void connect(Handlers connectHandlers){
+    final void connect(Handlers connectHandlers) {
         // connecting to all peers in the network
-        for (Peer peer: peers.values()){
+        for (Peer peer : peers.values()) {
             // register all connect handlers to client
             Iterator<ActionHandler> itr = connectHandlers.getHandlersIterator();
-            while(itr.hasNext()){
+            while (itr.hasNext()) {
                 ActionHandler handler = itr.next();
                 // connect handler
                 this.client.connect(peer.getPort(), peer.getHost(), handler);
@@ -154,46 +193,43 @@ public class NetPeer extends AbstractPeer {
         }
     }
 
-
     /**
      * @return net server
      */
-    public NetServer getServer(){
+    public NetServer getServer() {
         return server;
     }
 
     /**
-     *
      * @return net client
      */
-    public NetClient getClient(){
+    public NetClient getClient() {
         return client;
     }
 
     /**
      * @return peer's name
      */
-    public String getHost(){
+    public String getHost() {
         return this.peerName;
     }
 
     /**
      * @return return peer's port
      */
-    public int getPort(){
+    public int getPort() {
         return this.peerPort;
     }
 
     /**
      * peer as string
+     *
      * @return
      */
     @Override
-    public String toString(){
-        return String.format("%s:%d",this.peerName, this.peerPort);
+    public String toString() {
+        return String.format("%s:%d", this.peerName, this.peerPort);
     }
-
-
 
 
 }

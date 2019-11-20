@@ -9,12 +9,12 @@ import java.nio.file.Path;
 public class DeleteAction extends Action {
 
     // file to delete
-    private Path fileToDelete;
+    private final Path fileToDelete;
 
     // timestamp action was performed
-    private long unixTime;
+    private final long unixTime;
 
-    private boolean isDir;
+    private final boolean isDir;
 
     public DeleteAction(Path fileToDelete, boolean isDir) {
         super(ActionType.DELETE);
@@ -30,19 +30,20 @@ public class DeleteAction extends Action {
 
 
     /**
-     *     {
-     *       "type": "DELETE",
-     *       "path": "/opt/dir/newFile.txt",
-     *       "timestamp": 1572730328
-     *     }
-     * @return
+     * {
+     * "type": "DELETE",
+     * "path": "/opt/dir/newFile.txt",
+     * "timestamp": 1572730328
+     * }
+     *
+     * @return action as json string
      */
     @Override
     public String toJson() {
         return new JsonObject()
-                .put("type","DELETE")
-                .put("path",this.fileToDelete.toString())
-                .put("timestamp",this.unixTime)
+                .put("type", "DELETE")
+                .put("path", this.fileToDelete.toString())
+                .put("timestamp", this.unixTime)
                 .put("isDir", this.isDir)
                 .toString();
     }

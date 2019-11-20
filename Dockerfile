@@ -15,4 +15,4 @@ RUN echo "monitorable file" > /opt/dir/example.txt
 # RUN ["apt-get", "update"]
 # RUN ["apt-get", "install", "-y", "vim"]
 
-CMD ["java", "-jar", "synchronizer-jar-with-dependencies.jar", "-p", "/opt/dir", "-d" ,"172.18.0.10:2020","172.18.0.15:2020"];
+CMD ["java", "-jar", "synchronizer-jar-with-dependencies.jar", "-p", "/opt/dir", "-d" ,"172.18.0.10:2020","172.18.0.15:2020"]

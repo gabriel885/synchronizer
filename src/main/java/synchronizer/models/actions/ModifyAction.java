@@ -10,32 +10,38 @@ import java.nio.file.Path;
  * modify action
  * example:
  * {
- *  "type": {
- *       "MODIFY": {
- *           "path": "/opt/dir/modifiedFile.txt",
- *           "checksum": "abcdef"
- *        }
- *    }
+ * "type": {
+ * "MODIFY": {
+ * "path": "/opt/dir/modifiedFile.txt",
+ * "checksum": "abcdef"
+ * }
+ * }
  * }
  */
 public class ModifyAction extends Action {
 
     // modified file
-    private Path modifiedFile;
+    private final Path modifiedFile;
 
     // true if file is a directory
-    private boolean isDir;
+    private final boolean isDir;
 
     // file buffer
-    private Buffer newFileBuffer;
+    private final Buffer newFileBuffer;
 
     // checksum
-    private String checksum;
+    private final String checksum;
 
     // timestamp action was performed
-    private long unixTime;
+    private final long unixTime;
 
-    public ModifyAction(Path modifiedFile, boolean isDir, Buffer newFileBuffer){
+    /**
+     * if path is a directory - pass an empty buffer (e.g Buffer.buff())
+     * @param modifiedFile
+     * @param isDir
+     * @param newFileBuffer
+     */
+    public ModifyAction(Path modifiedFile, boolean isDir, Buffer newFileBuffer) {
         super(ActionType.MODIFY);
         this.modifiedFile = modifiedFile;
         this.isDir = isDir;
@@ -51,22 +57,23 @@ public class ModifyAction extends Action {
     }
 
     /**
-     *     {
-     *       "type": "MODIFY",
-     *       "checksum": "edfdcfd4e646fe736caa2825226bf33f",
-     *       "path": "/opt/dir/newFile.txt",
-     *       "timestamp": 1572730328,
-     *       "buffer" : "this is the modifications that was made in file"
-     *     }
-     * @return
+     * {
+     * "type": "MODIFY",
+     * "checksum": "edfdcfd4e646fe736caa2825226bf33f",
+     * "path": "/opt/dir/newFile.txt",
+     * "timestamp": 1572730328,
+     * "buffer" : "this is the modifications that was made in file"
+     * }
+     *
+     * @return action json object as string
      */
     @Override
     public String toJson() {
         return new JsonObject()
-                .put("type","MODIFY")
-                .put("checksum",this.checksum)
-                .put("path",this.modifiedFile.toString())
-                .put("timestamp",this.unixTime)
+                .put("type", "MODIFY")
+                .put("checksum", this.checksum)
+                .put("path", this.modifiedFile.toString())
+                .put("timestamp", this.unixTime)
                 .put("isDir", this.isDir)
                 .put("buffer", this.newFileBuffer.toString())
                 .toString();

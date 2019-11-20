@@ -1,6 +1,7 @@
 package synchronizer.models.actions;
 
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
 
 public class Nack extends Action {
 
@@ -15,6 +16,6 @@ public class Nack extends Action {
 
     @Override
     public String toJson() {
-        return "{nack}";
+        return new JsonObject().put("type","NACK").toString();
     }
 }

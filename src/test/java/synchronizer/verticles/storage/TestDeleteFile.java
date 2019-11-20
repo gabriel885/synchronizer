@@ -13,7 +13,7 @@ import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TestDeleteFile {
+class TestDeleteFile {
 
     // logger
     private static final Logger logger = LogManager.getLogger(TestCreateFile.class);
@@ -24,7 +24,7 @@ public class TestDeleteFile {
     private RandomString genRandomString = new RandomString();
 
     @Test
-    public void testDirDeletion(){
+    void testDirDeletion(){
         Vertx vertx = Vertx.vertx();
         Path fileToCreate = Paths.get(testDir,genRandomString.nextString());
         Buffer buffer = Buffer.buffer(); // dir has empty buffer
@@ -46,7 +46,7 @@ public class TestDeleteFile {
 
     }
     @Test
-    public void testFileDeletion(){
+    void testFileDeletion(){
         Vertx vertx = Vertx.vertx();
         Path fileToCreate = Paths.get(testDir,genRandomString.nextString()+".txt");
         Buffer buffer = Buffer.buffer().appendString("new content");

@@ -7,16 +7,10 @@ import io.vertx.core.json.JsonObject;
 // acknowledgement action
 public class Ack extends Action {
 
-    // the ack may have payload
-    private JsonObject actionObject;
-
     public Ack() {
         super(ActionType.ACK);
     }
 
-    public Ack(JsonObject actionObject){
-        this.actionObject = actionObject;
-    }
     @Override
     public Buffer bufferize() {
         return Buffer.buffer(toJson());
@@ -24,7 +18,7 @@ public class Ack extends Action {
 
     @Override
     public String toJson() {
-        return "{ack}";
+        return new JsonObject().put("type","ACK").toString();
     }
 
 }
