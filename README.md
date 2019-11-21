@@ -15,7 +15,6 @@ between multiple computers.
     * outcoming.actions
     * incoming.actions
  * SharedData local maps
-    * local.path
     * global.path
  * Actions
     * Create - create action
