@@ -47,16 +47,9 @@ public class PublishOutcomingActionsVerticle extends AbstractVerticle {
     @Override
     public void start() {
 
+        // event bus
         EventBus eb = vertx.eventBus();
 
-        // connect consumer
-        // confirm message
-        // temp action object for further modifications
-        //event.result().write(new DeleteAction());
-        // broadcast only relative path!!
-        // broadcast only relative path!!
-        // broadcast only relative path!!
-        // broadcast only relative path!!
         // consume file system actions from event bus
         MessageConsumer<JsonObject> consumer = eb.consumer(outcomingAddress.toString(), actionReceived -> {
 

@@ -65,6 +65,7 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
                 itr.remove();
             }
         }
+
         this.path = Paths.get(path);
         this.tcpPeer = new TCPPeer(myIpAddress, port, peers, new NetClientOptions()
                 .setReconnectAttempts(reconnectAttemps)
@@ -74,7 +75,7 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
     /**
      * start synchronizer.verticles.p2p application
      */
-    public void start() throws Exception {
+    public void start(){
         // deploy tcp peer
         vertx.deployVerticle(tcpPeer, deployResult -> {
             // tcp peer deployed successfully
@@ -90,21 +91,22 @@ public class P2PApplication extends AbstractMultiThreadedApplication {
                 vertx.deployVerticle(new ApplyIncomingActionsVerticle(this.path, this.tcpPeer, new EventBusAddress("incoming.actions")), deployResult2 -> {
                     // handle deploy results
                     if (!deployResult2.succeeded()) {
-                        throw new VertxException(deployResult2.cause());
+                       throw new VertxException(deployResult2.cause());
                     }
                 });
             } else {
                 logger.error(deployResult.cause());
+                throw new VertxException(deployResult.cause());
             }
         });
     }
-
 
     /**
      * kill synchronizer.verticles.p2p application gracefully
      */
     @Override
     public void kill() {
+        // close vertx instance
         vertx.close();
         logger.warn("P2PApplication is shutting down...");
         vertx.close();

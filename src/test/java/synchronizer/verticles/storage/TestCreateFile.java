@@ -3,8 +3,10 @@ package synchronizer.verticles.storage;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.unit.TestContext;
+import junit.framework.TestCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.jupiter.api.Test;
 import utils.RandomString;
@@ -13,10 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-class TestCreateFile {
+class TestCreateFile extends TestCase {
 
     // logger
     private static final Logger logger = LogManager.getLogger(TestCreateFile.class);
@@ -33,10 +32,24 @@ class TestCreateFile {
         this.vertx = Vertx.vertx();
     }
 
+    @After
+    void cleanup(){
+        logger.info(String.format("cleaning %s",testDir));
+        // delete test directory
+        if (vertx.fileSystem().existsBlocking(testDir)){
+            vertx.fileSystem().deleteRecursiveBlocking(testDir, true);
+        }
+    }
+
     @Before
     void perpare(TestContext context){
-
+        logger.info(String.format("creating tests directory %s", testDir));
+        // create test directory if missing
+        if (!vertx.fileSystem().existsBlocking(testDir)){
+            vertx.fileSystem().mkdirsBlocking(testDir);
+        }
     }
+
     @Test
     void testFileCreationOverride(){
 
@@ -62,6 +75,7 @@ class TestCreateFile {
 
 
     }
+
     @Test
     void testFileCreation(){
         Vertx vertx = Vertx.vertx();
@@ -80,8 +94,6 @@ class TestCreateFile {
                 assertEquals(buffer.toString(), vertx.fileSystem().readFileBlocking(fileToCreate.toAbsolutePath().toString()).toString());
             }
         });
-
-
     }
 
     /**
@@ -109,11 +121,8 @@ class TestCreateFile {
 
             }
         });
-
-        // wait for deployement completion
-
-
     }
+
     @Test
     void testDirCreation(){
         Path fileToCreate = Paths.get(testDir,genRandomString.nextString());

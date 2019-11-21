@@ -117,7 +117,7 @@ class NetPeer extends AbstractVerticle {
             logger.warn(t);
         }).listen(v -> { // listening succeeded
             if (v.succeeded()) {
-                logger.info(String.format("listening to all connections on port %s", v.result().actualPort()));
+                logger.info(String.format("%s is listening to all connections on port %s",this.peerName ,v.result().actualPort()));
             } else { // listening on port failed
                 logger.warn(v.cause());
             }

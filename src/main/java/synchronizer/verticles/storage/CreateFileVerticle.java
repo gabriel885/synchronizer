@@ -17,7 +17,7 @@ class CreateFileVerticle extends AbstractVerticle {
     // file's path to create
     private final Path fileToCreate;
 
-    // files buffer
+    // file's buffer
     private final Buffer fileBuffer;
 
     // true if file to create is a dir
@@ -42,8 +42,6 @@ class CreateFileVerticle extends AbstractVerticle {
         if (vertx.fileSystem().existsBlocking(this.fileToCreate.toString())) {
             vertx.fileSystem().deleteRecursiveBlocking(this.fileToCreate.toString(), true);
         }
-
-        // check if sub directories exist
 
         // create dir
         if (isDir) {

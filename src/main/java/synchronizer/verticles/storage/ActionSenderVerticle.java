@@ -15,13 +15,12 @@ import org.apache.logging.log4j.Logger;
 import synchronizer.models.Checksum;
 import synchronizer.models.EventBusAddress;
 import synchronizer.models.SharedDataMapAddress;
-import synchronizer.models.actions.CreateAction;
-import synchronizer.models.actions.DeleteAction;
-import synchronizer.models.actions.ModifyAction;
+import synchronizer.models.actions.*;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -198,6 +197,11 @@ public class ActionSenderVerticle extends AbstractVerticle {
 
             @Override
             public void onFileDelete(File file) {
+                // validate that the file has not been modified from an outside action. (e.g the ping-pong problem)
+                // file must exist locally
+                if (!isValidAction(file)){
+                    return;
+                }
                 actionObject = new JsonObject(new DeleteAction(file.toPath(), false).toJson());
                 publish(actionObject);
             }
@@ -304,9 +308,9 @@ public class ActionSenderVerticle extends AbstractVerticle {
 
                 // if the file is a directory and it exists locally - no need to broadcast any action
                 // delete actions are not validated!
-                if (file.isDirectory() && vertx.fileSystem().existsBlocking(file.toString())) {
-                    return false;
-                }
+//                if (file.isDirectory() && vertx.fileSystem().existsBlocking(file.toString())) {
+//                    return false;
+//                }
 
                 // origin file action
                 JsonObject origin;
@@ -318,8 +322,26 @@ public class ActionSenderVerticle extends AbstractVerticle {
 
                     logger.info(String.format("validating action for %s", origin.toString()));
 
+                    // validate action
+                    if (!Action.isValid(origin)){
+                        return false;
+                    }
+
+                    // on delete action in map return false
+                    if (Action.getActionType(origin) == ActionType.DELETE){
+                        logger.info(String.format("File %s is been deleted by an action. Successfully encountered ping-pong problem.", file.toString()));
+                        return false;
+                    }
+
                     // get file checksum
                     String originChecksum = origin.getString("checksum");
+
+                    // action does not contain checksum to compare
+                    if (originChecksum==null){
+                        return false;
+                    }
+
+                    logger.info(String.format("comapring checksums in map %s", Arrays.toString(ActionSenderVerticle.this.localMap.keySet().toArray())));
 
                     // compare the checksums of the origin file checksum and the current file
                     // if the checksums differ - the user has made the modification

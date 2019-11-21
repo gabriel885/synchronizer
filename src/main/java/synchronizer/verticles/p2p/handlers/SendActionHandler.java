@@ -51,10 +51,11 @@ public class SendActionHandler implements ActionHandler<AsyncResult<NetSocket>> 
 
                 if (responseActionType == ActionType.UNKNOWN || responseActionType == ActionType.NACK ){
                     logger.info(String.format("Received %s", v.toString()));
-                    logger.info("need to resend the message!");
+                    // resending buffer
+                    event.result().write(this.action.toBuffer());
                 }
                 else{
-                    logger.info("received ack from server - closing socket");
+                    logger.info(String.format("received ack from server - closing client socket of %s", event.result().localAddress()));
                     event.result().end(); // end handler (close it)
                 }
             });

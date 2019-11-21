@@ -86,7 +86,7 @@ public abstract class AbstractMultiThreadedApplication {
     /**
      * start multi-threaded application
      */
-    public abstract void start() throws Exception;
+    public abstract void start() ;
 
     /**
      * Kill all resources the application may use such as: executors tasks, vertx instances

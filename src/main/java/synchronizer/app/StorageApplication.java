@@ -1,5 +1,6 @@
 package synchronizer.app;
 
+import io.vertx.core.VertxException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import synchronizer.exceptions.PathNotDirectory;
@@ -40,16 +41,24 @@ public class StorageApplication extends AbstractMultiThreadedApplication {
      *
      * @throws Exception
      */
-    public void start() {
+    public void start(){
         logger.warn(String.format("%s: starting Storage application on path %s", myIpAddress, this.path.toString()));
 
         vertx.deployVerticle(new ActionSenderVerticle(myIpAddress, this.path, new EventBusAddress("outcoming.actions"), new SharedDataMapAddress("local.path")), deployResult1 -> {
             if (deployResult1.succeeded()) {
                 // deploy all synchronizer.verticles.storage application verticles
-                vertx.deployVerticle(new ActionReceiverVerticle(myIpAddress, this.path, new EventBusAddress("incoming.actions"), new SharedDataMapAddress("local.path")));
+                vertx.deployVerticle(new ActionReceiverVerticle(myIpAddress, this.path, new EventBusAddress("incoming.actions"), new SharedDataMapAddress("local.path")), deployResult2->{
+                    if (!deployResult2.succeeded()){
+                        throw new VertxException(deployResult2.cause());
+                    }
+                });
+            }
+            else{
+                throw new VertxException(deployResult1.cause());
             }
         });
     }
+
 
     @Override
     public void kill() {

@@ -2,8 +2,11 @@ package synchronizer.verticles.storage;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.unit.TestContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.jupiter.api.Test;
 import utils.RandomString;
 
@@ -22,6 +25,30 @@ class TestDeleteFile {
 
     // random string generator
     private RandomString genRandomString = new RandomString();
+
+    private Vertx vertx;
+
+    public TestDeleteFile(){
+        this.vertx = Vertx.vertx();
+    }
+
+    @After
+    void cleanup(){
+        logger.info(String.format("cleaning %s",testDir));
+        // delete test directory
+        if (vertx.fileSystem().existsBlocking(testDir)){
+            vertx.fileSystem().deleteRecursiveBlocking(testDir, true);
+        }
+    }
+
+    @Before
+    void perpare(TestContext context){
+        logger.info(String.format("creating tests directory %s", testDir));
+        // create test directory if missing
+        if (!vertx.fileSystem().existsBlocking(testDir)){
+            vertx.fileSystem().mkdirsBlocking(testDir);
+        }
+    }
 
     @Test
     void testDirDeletion(){
@@ -45,6 +72,7 @@ class TestDeleteFile {
         });
 
     }
+
     @Test
     void testFileDeletion(){
         Vertx vertx = Vertx.vertx();

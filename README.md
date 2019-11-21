@@ -171,49 +171,49 @@ docker exec container-name-2 /bin/bash
          });
         ```
         
-##### StorageApplication
 
-* __Scan periodically file system__
-``` java
-    // scan local file system path structure every 10 seconds.
-    vertx.setPeriodic(10000,v->{
-        vertx.deployVerticle(new LocalFileSystemWalkerVerticle(path));
-    });
-```
 
 ##### P2PApplication
 * Add TCP peer to the network
 ``` java
     // add peer on host 10.0.0.5 and listening port 2017
-    TCPPeer tcpPeer = new TCPPeer(myHost,port,new NetClientOptions().setReconnectAttempts(5).setReconnectInterval(5000));
-   
+    Set<Peer> peers = new HashSet<>();
+    for (String device : devices) {
+        String host = device.split(":")[0];
+        int port = Integer.parseInt(device.split(":")[1]);
+        peers.add(new Peer(host, port));
+    }
+    TCPPeer tcpPeer = new TCPPeer(myIpAddress, port, peers, new NetClientOptions()
+                    .setReconnectAttempts(reconnectAttemps)
+                    .setReconnectInterval(reconnectInterval));
     
-    // add client-server handlers
-   tcpPeer.addClientHandler(event->{
-      // handle handler event
-   });
-   tcp.addServerHandler(event->{
-      // handle handler event 
-   });
+    // connect to peer with send action handler
+    tcpPeer.connect(peer, new SendActionHandler(action));
+    
+    // listen to peers with handler
+    tcpPeer.listen(handler -> {
+        if (handler instanceof NetSocket) {
+            NetSocket socket = (NetSocket) handler; // will fail on runtime if handler is not a net socket
+    
+                    socket.handler(buffer -> {
+                        // handle buffer
+                        if (buffer == null || buffer.toString().isEmpty()) {
+                            return;
+                        }
+                        // confirm buffer to close sender's client socket
+                        socket.write(new Ack().bufferize());
+                    });
+        }
+    });
    
-    // deploy tcp peer verticle
-    // on deploy peer will connect to other peers 
-    vertx.deployVerticle(tcpPeer);
+    // broadcast action to all peers
+    tcpPeer.broadcastAction(action);
+    
+    // send action to specific peer
+    tcpPeer.sendAction(peer, action);
 
 ```
 
-* Create client-server handlers for TCP peer (listening for incoming actions from other peers)
-``` java
-    private Handlers serverHandlers = new Handlers(event -> {
-        // dummy handler
-    });
-
-    // client handlers (receive actions from other peers)
-    // default handler must be registered - registering dummy handler
-    private Handlers clientHandlers = new Handlers(event -> {
-        // dummy handler
-    });
-``` 
 __Important__: after tcpPeer is deployed it is not allowed to add client-server handlers.
      
 ### Makefile

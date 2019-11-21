@@ -9,6 +9,7 @@ WORKDIR /java/synchronizer
 
 # default monitorable files
 RUN mkdir -p /opt/dir
+# test file
 RUN echo "monitorable file" > /opt/dir/example.txt
 
 # intstall vim to edit files later inside the containers

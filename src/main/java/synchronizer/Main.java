@@ -31,7 +31,7 @@ class Main {
             // run storage application with path arguments
             storageApplication = new StorageApplication(cmd.getOptionValue("path"));
             storageApplication.start();
-
+            
             // run p2p application with paht and devices arguments
             p2pApplication = new P2PApplication(cmd.getOptionValue("path"), cmd.getOptionValues("devices"));
             p2pApplication.start();

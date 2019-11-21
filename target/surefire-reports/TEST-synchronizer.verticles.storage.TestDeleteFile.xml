@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="synchronizer.verticles.storage.TestDeleteFile" time="0.007" tests="2" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="synchronizer.verticles.storage.TestDeleteFile" time="0.012" tests="2" errors="0" skipped="0" failures="0">
   <properties>
     <property name="gopherProxySet" value="false"/>
     <property name="awt.toolkit" value="sun.lwawt.macosx.LWCToolkit"/>
@@ -12,12 +12,13 @@
     <property name="sun.arch.data.model" value="64"/>
     <property name="java.vendor.url" value="http://java.oracle.com/"/>
     <property name="user.timezone" value=""/>
+    <property name="user.country.format" value="IL"/>
     <property name="java.vm.specification.version" value="1.8"/>
     <property name="os.name" value="Mac OS X"/>
-    <property name="user.country" value="IL"/>
+    <property name="user.country" value="US"/>
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="sun.boot.library.path" value="/Library/Java/JavaVirtualMachines/jdk1.8.0_201.jdk/Contents/Home/jre/lib"/>
-    <property name="sun.java.command" value="/Users/gabrielmunits/IdeaProjects/synchronizer/target/surefire/surefirebooter4491919499919596417.jar /Users/gabrielmunits/IdeaProjects/synchronizer/target/surefire 2019-11-20T18-24-20_110-jvmRun1 surefire4985691363217372228tmp surefire_08920755353186414401tmp"/>
+    <property name="sun.java.command" value="/Users/gabrielmunits/IdeaProjects/synchronizer/target/surefire/surefirebooter2310390353789435281.jar /Users/gabrielmunits/IdeaProjects/synchronizer/target/surefire 2019-11-21T19-21-26_724-jvmRun1 surefire6329317627965605863tmp surefire_08463537970014195668tmp"/>
     <property name="http.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="surefire.test.class.path" value="/Users/gabrielmunits/IdeaProjects/synchronizer/target/test-classes:/Users/gabrielmunits/IdeaProjects/synchronizer/target/classes:/Users/gabrielmunits/.m2/repository/io/vertx/vertx-core/3.7.1/vertx-core-3.7.1.jar:/Users/gabrielmunits/.m2/repository/io/netty/netty-common/4.1.34.Final/netty-common-4.1.34.Final.jar:/Users/gabrielmunits/.m2/repository/io/netty/netty-buffer/4.1.34.Final/netty-buffer-4.1.34.Final.jar:/Users/gabrielmunits/.m2/repository/io/netty/netty-transport/4.1.34.Final/netty-transport-4.1.34.Final.jar:/Users/gabrielmunits/.m2/repository/io/netty/netty-handler/4.1.34.Final/netty-handler-4.1.34.Final.jar:/Users/gabrielmunits/.m2/repository/io/netty/netty-codec/4.1.34.Final/netty-codec-4.1.34.Final.jar:/Users/gabrielmunits/.m2/repository/io/netty/netty-handler-proxy/4.1.34.Final/netty-handler-proxy-4.1.34.Final.jar:/Users/gabrielmunits/.m2/repository/io/netty/netty-codec-socks/4.1.34.Final/netty-codec-socks-4.1.34.Final.jar:/Users/gabrielmunits/.m2/repository/io/netty/netty-codec-http/4.1.34.Final/netty-codec-http-4.1.34.Final.jar:/Users/gabrielmunits/.m2/repository/io/netty/netty-codec-http2/4.1.34.Final/netty-codec-http2-4.1.34.Final.jar:/Users/gabrielmunits/.m2/repository/io/netty/netty-resolver/4.1.34.Final/netty-resolver-4.1.34.Final.jar:/Users/gabrielmunits/.m2/repository/io/netty/netty-resolver-dns/4.1.34.Final/netty-resolver-dns-4.1.34.Final.jar:/Users/gabrielmunits/.m2/repository/io/netty/netty-codec-dns/4.1.34.Final/netty-codec-dns-4.1.34.Final.jar:/Users/gabrielmunits/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.9.8/jackson-core-2.9.8.jar:/Users/gabrielmunits/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.9.8/jackson-databind-2.9.8.jar:/Users/gabrielmunits/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.9.0/jackson-annotations-2.9.0.jar:/Users/gabrielmunits/.m2/repository/io/vertx/vertx-unit/3.8.3/vertx-unit-3.8.3.jar:/Users/gabrielmunits/.m2/repository/org/junit/jupiter/junit-jupiter-engine/5.5.2/junit-jupiter-engine-5.5.2.jar:/Users/gabrielmunits/.m2/repository/org/apiguardian/apiguardian-api/1.1.0/apiguardian-api-1.1.0.jar:/Users/gabrielmunits/.m2/repository/org/junit/platform/junit-platform-engine/1.5.2/junit-platform-engine-1.5.2.jar:/Users/gabrielmunits/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.5.0/junit-jupiter-api-5.5.0.jar:/Users/gabrielmunits/.m2/repository/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar:/Users/gabrielmunits/.m2/repository/org/junit/platform/junit-platform-commons/1.5.0/junit-platform-commons-1.5.0.jar:/Users/gabrielmunits/.m2/repository/commons-io/commons-io/2.5/commons-io-2.5.jar:/Users/gabrielmunits/.m2/repository/commons-net/commons-net/3.6/commons-net-3.6.jar:/Users/gabrielmunits/.m2/repository/commons-cli/commons-cli/1.3.1/commons-cli-1.3.1.jar:/Users/gabrielmunits/.m2/repository/commons-codec/commons-codec/1.9/commons-codec-1.9.jar:/Users/gabrielmunits/.m2/repository/org/apache/logging/log4j/log4j-core/2.12.1/log4j-core-2.12.1.jar:/Users/gabrielmunits/.m2/repository/org/apache/logging/log4j/log4j-api/2.12.1/log4j-api-2.12.1.jar:/Users/gabrielmunits/.m2/repository/junit/junit/4.13-rc-1/junit-4.13-rc-1.jar:/Users/gabrielmunits/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar:"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -31,7 +32,7 @@
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
     <property name="java.awt.graphicsenv" value="sun.awt.CGraphicsEnvironment"/>
-    <property name="surefire.real.class.path" value="/Users/gabrielmunits/IdeaProjects/synchronizer/target/surefire/surefirebooter4491919499919596417.jar"/>
+    <property name="surefire.real.class.path" value="/Users/gabrielmunits/IdeaProjects/synchronizer/target/surefire/surefirebooter2310390353789435281.jar"/>
     <property name="sun.boot.class.path" value="/Library/Java/JavaVirtualMachines/jdk1.8.0_201.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_201.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_201.jdk/Contents/Home/jre/lib/sunrsasign.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_201.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_201.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_201.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_201.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_201.jdk/Contents/Home/jre/classes"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
@@ -61,6 +62,6 @@
     <property name="java.class.version" value="52.0"/>
     <property name="socksNonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
   </properties>
-  <testcase name="testFileDeletion" classname="synchronizer.verticles.storage.TestDeleteFile" time="0.004"/>
-  <testcase name="testDirDeletion" classname="synchronizer.verticles.storage.TestDeleteFile" time="0.003"/>
+  <testcase name="testFileDeletion" classname="synchronizer.verticles.storage.TestDeleteFile" time="0.007"/>
+  <testcase name="testDirDeletion" classname="synchronizer.verticles.storage.TestDeleteFile" time="0.002"/>
 </testsuite>

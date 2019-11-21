@@ -94,18 +94,6 @@ public class TCPPeer extends NetPeer implements Protocol {
     // TODO: add promise - if something failed re-try on synchronizer.verticles.p2p application leve
     @Override
     public void start() {
-
-        // create client and server
-        // do we need this here??
-        // TODO: Redundant!!!! every listen/connect will initiate connection
-
-        this.server = vertx.createNetServer(serverOptions);
-        this.client = vertx.createNetClient(clientOptions);
-
-//        listen(serverHandlers);
-//        connect(clientHandlers);
-
-        // log all peers we are listening to
         logger.info(String.format("%s is deployed", this.getHost()));
     }
 

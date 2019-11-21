@@ -12,6 +12,7 @@ import synchronizer.models.EventBusAddress;
 import synchronizer.models.Peer;
 import synchronizer.models.actions.Ack;
 import synchronizer.models.actions.ActionType;
+import synchronizer.models.actions.Nack;
 import synchronizer.models.actions.ResponseAction;
 
 import java.nio.file.Files;
@@ -65,7 +66,7 @@ public class ApplyIncomingActionsVerticle extends AbstractVerticle {
                     if (buffer == null || buffer.toString().isEmpty()) {
                         return;
                     }
-                    // confirm buffer
+                    // confirm buffer to close sender's client socket
                     socket.write(new Ack().bufferize());
 
                     logger.info(String.format("received buffer %s from %s", buffer.toString(), socket.remoteAddress()));
@@ -90,7 +91,6 @@ public class ApplyIncomingActionsVerticle extends AbstractVerticle {
         //File f = new File(actionReceived);
 
         if (actionType == ActionType.REQUEST) {
-            logger.info("getting! response!!!!");
             // send response
             if (actionReceived.containsKey("path")) {
                 String path = actionReceived.getString("path");
@@ -116,8 +116,8 @@ public class ApplyIncomingActionsVerticle extends AbstractVerticle {
                 // check action type
                 // if nack received send peer nack on message
                 if (responseActionType == ActionType.NACK){
-                //    this.tcpPeer.sendAction(origin,new JsonObject(new Nack().toJson()));
-                    logger.info("received invalid message !");
+                    this.tcpPeer.sendAction(origin,new JsonObject(new Nack().toJson()));
+                    logger.info(String.format("received invalid message %s, sending nack",jsonResponse.toString()));
                 }
 
             }
