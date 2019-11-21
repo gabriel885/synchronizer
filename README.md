@@ -25,7 +25,6 @@ between multiple computers.
     * Nack - negative acknowledgement
     * Request - request a file
     * Response - response with requested file
-    * Sync - broadcast local path
 ### Design/Functionality
  * Multi Threaded Server Application
     * Storage Application
