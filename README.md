@@ -1,14 +1,14 @@
 ![assignment](docs/assignment.png)
 
 ## Objective
-Java program called "synchonizer" responsible for synchronizing path file data  
+Java program called "synchonizer" responsible for synchronizing path file data
 between multiple computers.
 
 ## Prerequesites
- * JDK 1.8 
+ * JDK 1.8
  * Maven
  * Docker (optional)
-    
+
 ### Principles
  * EventBus Actions
     * outcoming.actions
@@ -31,7 +31,7 @@ between multiple computers.
         * modify file content
         * delete files
         * publish/receive event bus events
-    * P2P application 
+    * P2P application
         * upload files
         * download files
         * listen to actions
@@ -65,6 +65,12 @@ docker exec container-name-1 /bin/bash
 docker exec container-name-2 /bin/bash
 
 ```
+
+## Verticles architecture
+![verticles_design](docs/verticles_design.png)
+## Software design
+![classDesign](docs/class_design.png)
+
 # Actions schemes:
 
 - Modify:
@@ -76,7 +82,7 @@ docker exec container-name-2 /bin/bash
       "isDir": false,
       "timestamp": 1572730328,
       "buffer" : "this is the modifications that was made in file"
-    }  
+    }
  ```
 - Create:
 ``` json
@@ -87,7 +93,7 @@ docker exec container-name-2 /bin/bash
       "checksum": "a063e188310b9cf711b0e251a349afc1",
       "timestamp": 1572730322,
       "buffer" : "new content is added to new file"
-    }    
+    }
 ```
 - Delete:
 ``` json
@@ -129,12 +135,12 @@ docker exec container-name-2 /bin/bash
         @Override
         public void kill(){}
       }
-      
+
       class Program{
         public void main(String [] args){
             Application app = new Application();
         }
-      } 
+      }
       ```
    - Add new stachostic task (executed asynchronically) to application:
       ``` java
@@ -160,7 +166,7 @@ docker exec container-name-2 /bin/bash
              }
          });
         ```
-        
+
 
 
 ##### P2PApplication
@@ -176,15 +182,15 @@ docker exec container-name-2 /bin/bash
     TCPPeer tcpPeer = new TCPPeer(myIpAddress, port, peers, new NetClientOptions()
                     .setReconnectAttempts(reconnectAttemps)
                     .setReconnectInterval(reconnectInterval));
-    
+
     // connect to peer with send action handler
     tcpPeer.connect(peer, new SendActionHandler(action));
-    
+
     // listen to peers with handler
     tcpPeer.listen(handler -> {
         if (handler instanceof NetSocket) {
             NetSocket socket = (NetSocket) handler; // will fail on runtime if handler is not a net socket
-    
+
                     socket.handler(buffer -> {
                         // handle buffer
                         if (buffer == null || buffer.toString().isEmpty()) {
@@ -195,17 +201,17 @@ docker exec container-name-2 /bin/bash
                     });
         }
     });
-   
+
     // broadcast action to all peers
     tcpPeer.broadcastAction(action);
-    
+
     // send action to specific peer
     tcpPeer.sendAction(peer, action);
 
 ```
 
 __Important__: after tcpPeer is deployed it is not allowed to add client-server handlers.
-     
+
 ### Makefile
 ``` bash
 # build maven project
@@ -242,7 +248,7 @@ kill:
 	docker stop $(docker ps -q --filter ancestor=<synchronizer:latest> )
 ```
 
-    
+
 #### Demo Time!
 
 1) Create docker network
@@ -260,9 +266,9 @@ docker network create --subnet=172.18.0.0/16 mynet123
 
 Client 1:
 ``` bash
-docker run --net mynet123 --ip 172.18.0.10 -it --rm synchronizer:latest  
+docker run --net mynet123 --ip 172.18.0.10 -it --rm synchronizer:latest
 ```
 Client 2:
 ``` bash
-docker run --net mynet123 --ip 172.18.0.15 -it --rm synchronizer:latest  
+docker run --net mynet123 --ip 172.18.0.15 -it --rm synchronizer:latest
 ```
