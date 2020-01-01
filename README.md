@@ -1,4 +1,3 @@
-## סדנה בתקשורת מחשבים 20588
 ![assignment](docs/assignment.png)
 
 ## Objective
