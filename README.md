@@ -71,7 +71,7 @@ docker exec container-name-2 /bin/bash
 ## Software design
 ![classDesign](docs/class_design.png)
 
-# Actions schemes:
+## Actions schemes
 
 - Modify:
 ``` json
