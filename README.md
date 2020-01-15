@@ -1,6 +1,6 @@
 ![assignment](docs/assignment.png)
-[![DEMO](docs/demo_thumbnail.png)](https://vimeo.com/user107530140/review/385014838/ca272ecdfd)
-Click the image to view the demo or click [HERE](https://vimeo.com/user107530140/review/385014838/ca272ecdfd)
+[![DEMO](docs/demo_thumbnail.png)](https://vimeo.com/user107530140/review/385016876/7d96acf4e4)
+Click the image to view the demo or click [HERE](https://vimeo.com/user107530140/review/385016876/7d96acf4e4)
 
 ## Objective
 Java program called "synchonizer" responsible for synchronizing path file data
